@@ -1,0 +1,4 @@
+theme: minima
+title: "Mastering Data Structures & Algorithms"
+description: "A 24-week, active-recall-driven DSA curriculum designed for 1.5–2.0 hours/day."
+markdown: kramdown
