@@ -1,7 +1,6 @@
 ---
 layout: default
 title: "Home"
-permalink: /
 ---
 
 # C# DSA Mastery: Active Recall Roadmap
@@ -119,27 +118,27 @@ Each module spans **10 to 12 days** and contains a minimum of **15 curated probl
 
 | # | Topic | Key Mental Model | Duration | Curated Problems |
 |:---:|:---|:---|:---:|:---:|
-| 01 | [Arrays, Hashing & Frequency Counting](01-arrays-and-hashing.md) | Value-to-index mapping, prefix state, bucket sort | 11 Days | 15 Problems |
-| 02 | [Two Pointers](02-two-pointers.md) | Inward squeeze, fast & slow scan, partition invariants | 11 Days | 15 Problems |
-| 03 | [Sliding Window](03-sliding-window.md) | Monotonic window expansion & dynamic contraction | 11 Days | 15 Problems |
-| 04 | [Stack & Monotonic Stack](04-stack.md) | Immediate next greater/smaller element, nearest boundary | 11 Days | 15 Problems |
-| 05 | [Binary Search & Answer Space](05-binary-search.md) | Predicate monotonicity $FF\dots TT$, boundary convergence | 11 Days | 15 Problems |
-| 06 | [Linked Lists & Pointer Logic](06-linked-lists.md) | Sentinel dummy head, pointer rewiring, Floyd's cycle | 11 Days | 15 Problems |
-| 07 | [Binary Trees & BSTs](07-binary-trees.md) | Subtree induction, DFS state return, BFS level tracking | 12 Days | 16 Problems |
-| 08 | [Heaps & Priority Queues](08-heaps.md) | Dynamic order statistics, $K$-way merge, two-heap median | 11 Days | 15 Problems |
-| 09 | [Backtracking & Recursion](09-backtracking.md) | Decision tree traversal, state exploration & restoration | 11 Days | 15 Problems |
-| 10 | [Graphs I: BFS, DFS & Grid Traversals](10-graphs-traversal.md) | Connected components, shortest path in unweighted graph | 11 Days | 15 Problems |
-| 11 | [Graphs II: Topo Sort, Dijkstra & DSU](11-graphs-advanced.md) | Dependency resolution, non-negative weighted paths, disjoint sets | 12 Days | 16 Problems |
-| 12 | [1-D Dynamic Programming](12-1d-dp.md) | Subproblem recurrence, optimal substructure, memory rolling | 11 Days | 15 Problems |
-| 13 | [2-D Dynamic Programming & Knapsack](13-2d-dp.md) | Grid paths, string alignment, bounded/unbounded choice | 12 Days | 16 Problems |
-| 14 | [Greedy Algorithms & Intervals](14-greedy-intervals.md) | Local optimum, sorting invariants, endpoint scheduling | 11 Days | 15 Problems |
-| 15 | [Bit Manipulation & Math Fundamentals](15-bit-manipulation-math.md) | Bitwise masks, XOR cancellation, modular arithmetic | 11 Days | 15 Problems |
+| 01 | [Arrays, Hashing & Frequency Counting](01-arrays-and-hashing.html) | Value-to-index mapping, prefix state, bucket sort | 11 Days | 15 Problems |
+| 02 | [Two Pointers](02-two-pointers.html) | Inward squeeze, fast & slow scan, partition invariants | 11 Days | 15 Problems |
+| 03 | [Sliding Window](03-sliding-window.html) | Monotonic window expansion & dynamic contraction | 11 Days | 15 Problems |
+| 04 | [Stack & Monotonic Stack](04-stack.html) | Immediate next greater/smaller element, nearest boundary | 11 Days | 15 Problems |
+| 05 | [Binary Search & Answer Space](05-binary-search.html) | Predicate monotonicity $FF\dots TT$, boundary convergence | 11 Days | 15 Problems |
+| 06 | [Linked Lists & Pointer Logic](06-linked-lists.html) | Sentinel dummy head, pointer rewiring, Floyd's cycle | 11 Days | 15 Problems |
+| 07 | [Binary Trees & BSTs](07-binary-trees.html) | Subtree induction, DFS state return, BFS level tracking | 12 Days | 16 Problems |
+| 08 | [Heaps & Priority Queues](08-heaps.html) | Dynamic order statistics, $K$-way merge, two-heap median | 11 Days | 15 Problems |
+| 09 | [Backtracking & Recursion](09-backtracking.html) | Decision tree traversal, state exploration & restoration | 11 Days | 15 Problems |
+| 10 | [Graphs I: BFS, DFS & Grid Traversals](10-graphs-traversal.html) | Connected components, shortest path in unweighted graph | 11 Days | 15 Problems |
+| 11 | [Graphs II: Topo Sort, Dijkstra & DSU](11-graphs-advanced.html) | Dependency resolution, non-negative weighted paths, disjoint sets | 12 Days | 16 Problems |
+| 12 | [1-D Dynamic Programming](12-1d-dp.html) | Subproblem recurrence, optimal substructure, memory rolling | 11 Days | 15 Problems |
+| 13 | [2-D Dynamic Programming & Knapsack](13-2d-dp.html) | Grid paths, string alignment, bounded/unbounded choice | 12 Days | 16 Problems |
+| 14 | [Greedy Algorithms & Intervals](14-greedy-intervals.html) | Local optimum, sorting invariants, endpoint scheduling | 11 Days | 15 Problems |
+| 15 | [Bit Manipulation & Math Fundamentals](15-bit-manipulation-math.html) | Bitwise masks, XOR cancellation, modular arithmetic | 11 Days | 15 Problems |
 
 ---
 
 ## 📅 High-Level Roadmap
 
-View the complete week-by-week timeline and study calendar: **[Course Schedule](schedule.md)**.
+View the complete week-by-week timeline and study calendar: **[Course Schedule](schedule.html)**.
 
-Ready to begin? Start with **[Topic 1: Arrays, Hashing & Frequency Counting](01-arrays-and-hashing.md)**.
+Ready to begin? Start with **[Topic 1: Arrays, Hashing & Frequency Counting](01-arrays-and-hashing.html)**.
 

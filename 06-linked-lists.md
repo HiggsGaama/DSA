@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Linked Lists & Fast/Slow Pointers"
-permalink: /linked-lists/
 ---
 
 # Linked Lists & Fast/Slow Pointers
@@ -539,5 +538,5 @@ It provides a built-in, 4-ary min-heap implementation where priority is decouple
 
 ---
 
-[⬅️ Previous Topic: Binary Search](05-binary-search.md) | [Home](index.md) | [Next Topic: Binary Trees & BSTs ➡️](07-binary-trees.md)
+[⬅️ Previous Topic: Binary Search](05-binary-search.html) | [Home](index.html) | [Next Topic: Binary Trees & BSTs ➡️](07-binary-trees.html)
 

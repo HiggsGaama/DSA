@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Graphs I: BFS, DFS & Grid Traversals"
-permalink: /graphs-traversal/
 ---
 
 # Graphs I: BFS, DFS & Grid Traversals
@@ -589,5 +588,5 @@ State 0 (white) = unvisited; State 1 (grey) = currently on the active recursion 
 
 ---
 
-[⬅️ Previous Topic: Backtracking](09-backtracking.md) | [Home](index.md) | [Next Topic: Graphs II: Topological Sort, Dijkstra & Union-Find ➡️](11-graphs-advanced.md)
+[⬅️ Previous Topic: Backtracking](09-backtracking.html) | [Home](index.html) | [Next Topic: Graphs II: Topological Sort, Dijkstra & Union-Find ➡️](11-graphs-advanced.html)
 

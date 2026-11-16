@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Graphs II: Topological Sort, Dijkstra & Union-Find"
-permalink: /graphs-advanced/
 ---
 
 # Graphs II: Topological Sort, Dijkstra & Union-Find
@@ -635,5 +634,5 @@ By replacing the standard FIFO <code>Queue&lt;int&gt;</code> with a <code>Priori
 
 ---
 
-[⬅️ Previous Topic: Graphs I](10-graphs-traversal.md) | [Home](index.md) | [Next Topic: 1-D Dynamic Programming ➡️](12-1d-dp.md)
+[⬅️ Previous Topic: Graphs I](10-graphs-traversal.html) | [Home](index.html) | [Next Topic: 1-D Dynamic Programming ➡️](12-1d-dp.html)
 

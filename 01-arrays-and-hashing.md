@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Arrays, Hashing & Frequency Counting"
-permalink: /arrays-and-hashing/
 ---
 
 # Arrays, Hashing & Frequency Counting
@@ -475,5 +474,5 @@ If using a custom class without overriding <code>Equals()</code> and <code>GetHa
 
 ---
 
-[Home](index.md) | [Next Topic: Two Pointers ➡️](02-two-pointers.md)
+[Home](index.html) | [Next Topic: Two Pointers ➡️](02-two-pointers.html)
 

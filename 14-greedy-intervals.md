@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Greedy Algorithms & Intervals"
-permalink: /greedy-intervals/
 ---
 
 # Greedy Algorithms & Intervals
@@ -457,5 +456,5 @@ Sorting two plain arrays of size $N$ takes $O(N \log N)$ operations with high CP
 
 ---
 
-[⬅️ Previous Topic: 2-D Dynamic Programming](13-2d-dp.md) | [Home](index.md) | [Next Topic: Bit Manipulation & Math Fundamentals ➡️](15-bit-manipulation-math.md)
+[⬅️ Previous Topic: 2-D Dynamic Programming](13-2d-dp.html) | [Home](index.html) | [Next Topic: Bit Manipulation & Math Fundamentals ➡️](15-bit-manipulation-math.html)
 

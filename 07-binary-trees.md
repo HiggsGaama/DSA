@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Binary Trees & BSTs"
-permalink: /binary-trees/
 ---
 
 # Binary Trees & BSTs
@@ -497,5 +496,5 @@ It records entry and exit timestamps during DFS. A node's entire subtree maps to
 
 ---
 
-[⬅️ Previous Topic: Linked Lists](06-linked-lists.md) | [Home](index.md) | [Next Topic: Heaps & Priority Queues ➡️](08-heaps.md)
+[⬅️ Previous Topic: Linked Lists](06-linked-lists.html) | [Home](index.html) | [Next Topic: Heaps & Priority Queues ➡️](08-heaps.html)
 

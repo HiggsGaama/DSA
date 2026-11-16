@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Stack & Monotonic Stack"
-permalink: /stack/
 ---
 
 # Stack & Monotonic Stack
@@ -484,5 +483,5 @@ Using a standard <code>foreach (var item in stack)</code> loop. In C#, <code>for
 
 ---
 
-[⬅️ Previous Topic: Sliding Window](03-sliding-window.md) | [Home](index.md) | [Next Topic: Binary Search & Answer Space ➡️](05-binary-search.md)
+[⬅️ Previous Topic: Sliding Window](03-sliding-window.html) | [Home](index.html) | [Next Topic: Binary Search & Answer Space ➡️](05-binary-search.html)
 

@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Bit Manipulation & Math Fundamentals"
-permalink: /bit-manipulation-math/
 ---
 
 # Bit Manipulation & Math Fundamentals
@@ -429,5 +428,5 @@ By reducing modulo $M$ at every single intermediate multiplication step: <code>r
 
 ---
 
-[⬅️ Previous Topic: Greedy Algorithms & Intervals](14-greedy-intervals.md) | [Home](index.md) | **🎉 Course Completed!**
+[⬅️ Previous Topic: Greedy Algorithms & Intervals](14-greedy-intervals.html) | [Home](index.html) | **🎉 Course Completed!**
 

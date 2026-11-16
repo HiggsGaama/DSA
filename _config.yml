@@ -6,3 +6,6 @@ plugins:
 
 header_pages:
   - schedule.md
+
+baseurl: "/DSA"
+url: "https://higgsgaama.github.io"

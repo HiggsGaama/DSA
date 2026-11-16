@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Binary Search & Answer Space Reduction"
-permalink: /binary-search/
 ---
 
 # Binary Search & Answer Space Reduction
@@ -529,5 +528,5 @@ In <code>while (left &lt;= right)</code>, the loop executes when <code>left == r
 
 ---
 
-[⬅️ Previous Topic: Stack & Monotonic Stack](04-stack.md) | [Home](index.md) | [Next Topic: Linked Lists & Fast/Slow Pointers ➡️](06-linked-lists.md)
+[⬅️ Previous Topic: Stack & Monotonic Stack](04-stack.html) | [Home](index.html) | [Next Topic: Linked Lists & Fast/Slow Pointers ➡️](06-linked-lists.html)
 

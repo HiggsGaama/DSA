@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Two Pointers"
-permalink: /two-pointers/
 ---
 
 # Two Pointers
@@ -483,5 +482,5 @@ Using C# ValueTuple deconstruction: <code>(nums[i], nums[j]) = (nums[j], nums[i]
 
 ---
 
-[⬅️ Previous Topic: Arrays & Hashing](01-arrays-and-hashing.md) | [Home](index.md) | [Next Topic: Sliding Window ➡️](03-sliding-window.md)
+[⬅️ Previous Topic: Arrays & Hashing](01-arrays-and-hashing.html) | [Home](index.html) | [Next Topic: Sliding Window ➡️](03-sliding-window.html)
 

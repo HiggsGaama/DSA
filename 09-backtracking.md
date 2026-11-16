@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Backtracking & Recursion"
-permalink: /backtracking/
 ---
 
 # Backtracking & Recursion
@@ -564,5 +563,5 @@ Mutating a grid cell directly (e.g. setting to <code>'#'</code> and restoring up
 
 ---
 
-[⬅️ Previous Topic: Heaps & Priority Queues](08-heaps.md) | [Home](index.md) | [Next Topic: Graphs I: BFS, DFS & Grid Traversals ➡️](10-graphs-traversal.md)
+[⬅️ Previous Topic: Heaps & Priority Queues](08-heaps.html) | [Home](index.html) | [Next Topic: Graphs I: BFS, DFS & Grid Traversals ➡️](10-graphs-traversal.html)
 

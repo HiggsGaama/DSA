@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Heaps & Priority Queues"
-permalink: /heaps/
 ---
 
 # Heaps & Priority Queues
@@ -540,5 +539,5 @@ By keeping the lower half of numbers in a max-heap and the upper half in a min-h
 
 ---
 
-[⬅️ Previous Topic: Binary Trees](07-binary-trees.md) | [Home](index.md) | [Next Topic: Backtracking & Recursion ➡️](09-backtracking.md)
+[⬅️ Previous Topic: Binary Trees](07-binary-trees.html) | [Home](index.html) | [Next Topic: Backtracking & Recursion ➡️](09-backtracking.html)
 

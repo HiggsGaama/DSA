@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: default
 title: "Sliding Window"
-permalink: /sliding-window/
 ---
 
 # Sliding Window
@@ -509,5 +508,5 @@ A double-ended queue (deque) implemented via <code>LinkedList&lt;int&gt;</code> 
 
 ---
 
-[⬅️ Previous Topic: Two Pointers](02-two-pointers.md) | [Home](index.md) | [Next Topic: Stack & Monotonic Stack ➡️](04-stack.md)
+[⬅️ Previous Topic: Two Pointers](02-two-pointers.html) | [Home](index.html) | [Next Topic: Stack & Monotonic Stack ➡️](04-stack.html)
 
