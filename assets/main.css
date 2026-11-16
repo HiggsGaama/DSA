@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Mastering Data Structures & Algorithms - GitHub Dark Theme
+   Mastering Data Structures & Algorithms - Vibrant GitHub Dark Theme
    100% Pure CSS (No YAML Front Matter, No SCSS compilation required)
    ========================================================================== */
 
@@ -11,10 +11,10 @@ html, body {
   margin: 0;
   padding: 0;
   background-color: #0d1117 !important;
-  color: #c9d1d9 !important;
+  color: #e6edf3 !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.65;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -28,7 +28,7 @@ html, body {
 }
 
 .wrapper {
-  max-width: 900px;
+  max-width: 920px;
   margin-right: auto;
   margin-left: auto;
   padding-right: 24px;
@@ -49,7 +49,7 @@ html, body {
 }
 
 .page-content {
-  padding: 32px 0;
+  padding: 36px 0 60px 0;
   flex: 1 0 auto;
   background-color: #0d1117 !important;
 }
@@ -61,30 +61,33 @@ html, body {
 .site-header {
   border-top: 4px solid #58a6ff !important;
   border-bottom: 1px solid #30363d !important;
-  min-height: 56px;
+  min-height: 58px;
   background-color: #161b22 !important;
   position: relative;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
 .site-title,
 .site-title:visited {
   font-size: 22px;
-  font-weight: 600;
-  line-height: 54px;
-  letter-spacing: -0.5px;
+  font-weight: 700;
+  line-height: 56px;
+  letter-spacing: -0.4px;
   margin-bottom: 0;
   float: left;
-  color: #f0f6fc !important;
+  background: linear-gradient(135deg, #79c0ff 0%, #d2a8ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   text-decoration: none !important;
 }
 
 .site-title:hover {
-  color: #58a6ff !important;
+  opacity: 0.9;
 }
 
 .site-nav {
   float: right;
-  line-height: 54px;
+  line-height: 56px;
   background-color: transparent !important;
 }
 
@@ -99,22 +102,27 @@ html, body {
 .site-nav .page-link {
   color: #c9d1d9 !important;
   font-weight: 500;
+  font-size: 15px;
   line-height: 1.5;
   text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
 }
 
 .site-nav .page-link:hover {
   color: #58a6ff !important;
+  background-color: rgba(56, 139, 253, 0.12);
 }
 
 .site-nav .page-link:not(:last-child) {
-  margin-right: 20px;
+  margin-right: 12px;
 }
 
 @media screen and (max-width: 600px) {
   .site-nav {
     position: absolute;
-    top: 9px;
+    top: 10px;
     right: 15px;
     background-color: #161b22 !important;
     border: 1px solid #30363d !important;
@@ -161,51 +169,71 @@ html, body {
 }
 
 /* ==========================================================================
-   Typography & Base Content
+   Typography, Colorful Headings & Accents
    ========================================================================== */
 
-h1, h2, h3, h4, h5, h6, .post-title, .page-heading {
-  color: #f0f6fc !important;
-  font-weight: 600;
-  line-height: 1.3;
-  margin-top: 28px;
-  margin-bottom: 14px;
-}
-
-h1 {
-  font-size: 2.1em;
+h1, .post-title, .page-heading {
+  font-size: 2.2em;
+  font-weight: 700 !important;
+  line-height: 1.25;
+  margin-top: 32px;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #79c0ff 0%, #bc8cff 60%, #56d364 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   border-bottom: 1px solid #30363d;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
 }
 
 h2 {
-  font-size: 1.55em;
-  border-bottom: 1px solid #21262d;
+  font-size: 1.6em;
+  font-weight: 600 !important;
+  color: #58a6ff !important; /* Electric Blue */
+  margin-top: 36px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid rgba(88, 166, 255, 0.25);
   padding-bottom: 8px;
+  letter-spacing: -0.3px;
 }
 
 h3 {
-  font-size: 1.28em;
+  font-size: 1.3em;
+  font-weight: 600 !important;
+  color: #e3b341 !important; /* Golden Amber - separates days & patterns with punch! */
+  margin-top: 30px;
+  margin-bottom: 14px;
 }
 
 h4 {
-  font-size: 1.1em;
+  font-size: 1.15em;
+  font-weight: 600 !important;
+  color: #56d364 !important; /* Fresh Mint Green */
+  margin-top: 24px;
+  margin-bottom: 12px;
 }
 
 p {
   margin-top: 0;
   margin-bottom: 16px;
-  color: #c9d1d9 !important;
+  color: #e6edf3 !important;
+}
+
+strong, b {
+  color: #ffffff !important;
+  font-weight: 600;
 }
 
 a {
   color: #58a6ff !important;
   text-decoration: none;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
 }
 
 a:hover {
   color: #79c0ff !important;
   text-decoration: underline;
+  text-shadow: 0 0 8px rgba(88, 166, 255, 0.35);
 }
 
 a:visited {
@@ -214,13 +242,13 @@ a:visited {
 
 ul, ol {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   padding-left: 28px;
-  color: #c9d1d9 !important;
+  color: #e6edf3 !important;
 }
 
 li {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 li > ul,
@@ -232,21 +260,31 @@ li > ol {
 hr {
   border: 0;
   height: 1px;
-  background-color: #30363d;
-  margin: 32px 0;
+  background: linear-gradient(90deg, #30363d 0%, #58a6ff 50%, #30363d 100%);
+  margin: 36px 0;
 }
 
+/* ==========================================================================
+   Vibrant Meta Banners & Blockquotes
+   ========================================================================== */
+
 blockquote {
-  color: #8b949e !important;
-  border-left: 4px solid #58a6ff !important;
-  background-color: #161b22 !important;
-  padding: 12px 18px !important;
-  margin: 18px 0 !important;
-  border-radius: 0 6px 6px 0;
+  background: linear-gradient(135deg, rgba(56, 139, 253, 0.12) 0%, rgba(188, 140, 255, 0.08) 100%) !important;
+  border: 1px solid rgba(88, 166, 255, 0.3) !important;
+  border-left: 5px solid #58a6ff !important;
+  border-radius: 8px !important;
+  padding: 14px 20px !important;
+  margin: 22px 0 !important;
+  color: #e6edf3 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
 blockquote > :last-child {
   margin-bottom: 0;
+}
+
+blockquote strong {
+  color: #79c0ff !important;
 }
 
 /* ==========================================================================
@@ -254,27 +292,43 @@ blockquote > :last-child {
    ========================================================================== */
 
 details {
-  background-color: #161b22 !important;
+  background: linear-gradient(180deg, #161b22 0%, #151b23 100%) !important;
   border: 1px solid #30363d !important;
-  border-radius: 6px;
-  padding: 14px 18px !important;
-  margin: 16px 0 !important;
-  transition: border-color 0.2s ease;
+  border-left: 4px solid #bc8cff !important; /* Elegant Purple accent */
+  border-radius: 8px !important;
+  padding: 16px 20px !important;
+  margin: 20px 0 !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease-in-out;
+}
+
+details:hover {
+  border-color: #58a6ff !important;
+  border-left-color: #d2a8ff !important;
 }
 
 details[open] {
-  border-color: #58a6ff !important;
+  border-color: #388bfd !important;
+  border-left-color: #58a6ff !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(88, 166, 255, 0.15) !important;
+  background: #161b22 !important;
 }
 
 summary {
   cursor: pointer !important;
   font-weight: 600 !important;
-  color: #58a6ff !important;
+  font-size: 15.5px !important;
+  color: #79c0ff !important; /* Bright Sky Blue */
   outline: none !important;
   user-select: none;
+  padding: 2px 0;
 }
 
 summary:hover {
+  color: #a5d6ff !important;
+}
+
+summary b {
   color: #79c0ff !important;
 }
 
@@ -285,44 +339,67 @@ summary:hover {
 table {
   border-collapse: collapse !important;
   width: 100% !important;
-  margin: 24px 0 !important;
+  margin: 26px 0 !important;
   background-color: #161b22 !important;
   border: 1px solid #30363d !important;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 th, td {
   border: 1px solid #30363d !important;
-  padding: 10px 14px !important;
+  padding: 12px 16px !important;
   text-align: left;
 }
 
 th {
-  background-color: #21262d !important;
-  color: #f0f6fc !important;
+  background: linear-gradient(180deg, #21262d 0%, #1a2028 100%) !important;
+  color: #79c0ff !important;
+  border-bottom: 2px solid #58a6ff !important;
   font-weight: 600 !important;
+  font-size: 14px;
+  letter-spacing: 0.3px;
 }
 
 tr:nth-child(even) {
-  background-color: #1b2129 !important;
+  background-color: #161b22 !important;
+}
+
+tr:nth-child(odd) {
+  background-color: #10141a !important;
 }
 
 tr:hover {
-  background-color: #262c36 !important;
+  background-color: #1c232e !important;
 }
 
 input[type="checkbox"] {
-  accent-color: #58a6ff;
-  margin-right: 6px;
+  accent-color: #3fb950;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
   vertical-align: middle;
+  cursor: pointer;
 }
 
 /* ==========================================================================
-   CODE BLOCKS, ASCII FLOWCHARTS & SYNTAX HIGHLIGHTING
-   (Permanently eliminates lavender/white backgrounds)
+   CODE BLOCKS, SYNTAX HIGHLIGHTING & INLINE CHIPS
    ========================================================================== */
 
+/* Standalone inline code badges (Fresh Mint Chip look) */
+:not(pre) > code {
+  background-color: rgba(56, 139, 253, 0.12) !important;
+  color: #7ee787 !important; /* Crisp Mint Green */
+  border: 1px solid rgba(126, 231, 135, 0.28) !important;
+  border-radius: 5px !important;
+  padding: 2px 7px !important;
+  font-size: 0.88em !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace !important;
+  font-weight: 500;
+}
+
+/* All code container wrappers */
 div.highlighter-rouge,
 div.highlighter-rouge div.highlight,
 div.highlighter-rouge pre,
@@ -340,28 +417,30 @@ figure.highlight pre,
 figure.highlight code,
 pre,
 code {
-  background-color: #161b22 !important;
+  background-color: #0d1117 !important;
   color: #e6edf3 !important;
   border-color: #30363d !important;
 }
 
 div.highlighter-rouge,
 figure.highlight {
-  background-color: #161b22 !important;
+  background-color: #0d1117 !important;
   border: 1px solid #30363d !important;
-  border-radius: 6px !important;
+  border-top: 2px solid #58a6ff !important; /* Blue top accent */
+  border-radius: 8px !important;
   margin: 1.5em 0 !important;
   overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 pre,
 pre.highlight,
 .highlight pre,
 div.highlighter-rouge pre {
-  background-color: #161b22 !important;
+  background-color: #0d1117 !important;
   color: #e6edf3 !important;
   border: 1px solid #30363d !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   padding: 16px 20px !important;
   margin: 0 !important;
   overflow-x: auto !important;
@@ -372,6 +451,7 @@ div.highlighter-rouge pre {
 
 div.highlighter-rouge pre {
   border: none !important;
+  border-radius: 0 !important;
 }
 
 pre > code,
@@ -388,28 +468,18 @@ div.highlighter-rouge pre > code {
   line-height: inherit !important;
 }
 
-:not(pre) > code {
-  background-color: #21262d !important;
-  color: #ff7b72 !important;
-  border: 1px solid #30363d !important;
-  border-radius: 4px !important;
-  padding: 2px 6px !important;
-  font-size: 0.88em !important;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
-}
-
-/* Rouge Dark Syntax Tokens (GitHub Dark Theme) */
-.highlight .c, .highlight .c1, .highlight .cm, .highlight .cs, .highlight .cp { color: #8b949e !important; font-style: italic; }
-.highlight .k, .highlight .kd, .highlight .kn, .highlight .kp, .highlight .kr, .highlight .kt, .highlight .kv { color: #ff7b72 !important; font-weight: 600; }
-.highlight .s, .highlight .s1, .highlight .s2, .highlight .sb, .highlight .sc, .highlight .sd, .highlight .se, .highlight .sh, .highlight .si, .highlight .sx, .highlight .sr { color: #a5d6ff !important; }
-.highlight .m, .highlight .mf, .highlight .mh, .highlight .mi, .highlight .il, .highlight .mo { color: #79c0ff !important; }
-.highlight .o, .highlight .ow { color: #ff7b72 !important; }
-.highlight .nc, .highlight .nn, .highlight .nt { color: #ffa657 !important; }
-.highlight .nf, .highlight .fm { color: #d2a8ff !important; font-weight: 600; }
-.highlight .na, .highlight .nb, .highlight .nv, .highlight .vi, .highlight .vg { color: #79c0ff !important; }
-.highlight .p { color: #c9d1d9 !important; }
-.highlight .nl { color: #79c0ff !important; }
-.highlight .w { color: #c9d1d9 !important; background-color: transparent !important; }
+/* Rouge Dark Syntax Tokens (Vibrant Modern C# Palette) */
+.highlight .c, .highlight .c1, .highlight .cm, .highlight .cs, .highlight .cp { color: #8b949e !important; font-style: italic; } /* Comments */
+.highlight .k, .highlight .kd, .highlight .kn, .highlight .kp, .highlight .kr, .highlight .kt, .highlight .kv { color: #ff7b72 !important; font-weight: 600; } /* Keywords */
+.highlight .s, .highlight .s1, .highlight .s2, .highlight .sb, .highlight .sc, .highlight .sd, .highlight .se, .highlight .sh, .highlight .si, .highlight .sx, .highlight .sr { color: #a5d6ff !important; } /* Strings */
+.highlight .m, .highlight .mf, .highlight .mh, .highlight .mi, .highlight .il, .highlight .mo { color: #79c0ff !important; font-weight: 500; } /* Numbers */
+.highlight .o, .highlight .ow { color: #ff7b72 !important; } /* Operators */
+.highlight .nc, .highlight .nn, .highlight .nt { color: #ffa657 !important; font-weight: 600; } /* Class / Type names */
+.highlight .nf, .highlight .fm { color: #d2a8ff !important; font-weight: 600; } /* Method / Function names */
+.highlight .na, .highlight .nb, .highlight .nv, .highlight .vi, .highlight .vg { color: #79c0ff !important; } /* Variable names */
+.highlight .p { color: #e6edf3 !important; } /* Punctuation */
+.highlight .nl { color: #79c0ff !important; } /* Labels */
+.highlight .w { color: #e6edf3 !important; background-color: transparent !important; }
 
 /* ==========================================================================
    Footer
@@ -417,7 +487,7 @@ div.highlighter-rouge pre > code {
 
 .site-footer {
   border-top: 1px solid #30363d !important;
-  padding: 30px 0;
+  padding: 32px 0;
   background-color: #161b22 !important;
   color: #8b949e !important;
   font-size: 14px;
