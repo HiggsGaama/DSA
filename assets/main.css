@@ -384,6 +384,92 @@ input[type="checkbox"] {
 }
 
 /* ==========================================================================
+   Collections & Big-O Reference Table Styling
+   ========================================================================== */
+
+/* Data Structure Title (Column 1) */
+table td:nth-child(1) strong {
+  color: #f0f6fc !important;
+  font-weight: 600;
+  display: block;
+}
+
+/* C# Type / Class Names (Column 2) */
+table td:nth-child(2) code,
+.csharp-type {
+  color: #ffa657 !important; /* Warm Peach / Orange for C# Types & Classes */
+  background-color: rgba(255, 166, 87, 0.12) !important;
+  border: 1px solid rgba(255, 166, 87, 0.35) !important;
+  border-radius: 5px !important;
+  padding: 3px 8px !important;
+  font-weight: 600 !important;
+  font-size: 0.9em !important;
+  display: inline-block;
+  margin: 2px 0;
+  white-space: nowrap;
+}
+
+/* Common Methods (Column 3) */
+table td:nth-child(3) code,
+.csharp-method {
+  color: #d2a8ff !important; /* Soft Lilac / Purple for C# Methods */
+  background-color: rgba(210, 168, 255, 0.12) !important;
+  border: 1px solid rgba(210, 168, 255, 0.3) !important;
+  border-radius: 5px !important;
+  padding: 2px 6px !important;
+  font-size: 0.86em !important;
+  display: inline-block;
+  margin: 2px 2px;
+  white-space: nowrap;
+}
+
+/* Complexity Badges (Column 4) */
+table td:nth-child(4) {
+  text-align: center;
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+.badge-o1 {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 700;
+  font-size: 0.88em;
+  color: #3fb950 !important; /* Emerald Green for O(1) */
+  background-color: rgba(63, 185, 80, 0.15) !important;
+  border: 1px solid rgba(63, 185, 80, 0.4) !important;
+  white-space: nowrap;
+}
+
+.badge-ologn {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 700;
+  font-size: 0.88em;
+  color: #58a6ff !important; /* Sky Blue for O(log N) */
+  background-color: rgba(88, 166, 255, 0.15) !important;
+  border: 1px solid rgba(88, 166, 255, 0.4) !important;
+  white-space: nowrap;
+}
+
+.badge-on {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 700;
+  font-size: 0.88em;
+  color: #e3b341 !important; /* Amber / Yellow for O(N) */
+  background-color: rgba(227, 179, 65, 0.15) !important;
+  border: 1px solid rgba(227, 179, 65, 0.4) !important;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
    CODE BLOCKS, SYNTAX HIGHLIGHTING & INLINE CHIPS
    ========================================================================== */
 
