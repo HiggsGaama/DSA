@@ -1,221 +1,593 @@
 ---
-layout: default
-title: "Topic 10: Graphs I - BFS, DFS & Grid Traversals"
+layout: page
+title: "Graphs I: BFS, DFS & Grid Traversals"
+permalink: /graphs-traversal/
 ---
 
-# Topic 10: Graphs I - BFS, DFS & Grid Traversals
+# Graphs I: BFS, DFS & Grid Traversals
 
-[← Topic 09: Backtracking](09-backtracking.md) \| [Schedule](schedule.md) \| [Next: Graphs II (Advanced) →](11-graphs-advanced.md)
-
----
-
-## Daily Timeboxing (1.5 – 2.0 Hours)
-- **00:00 – 00:15 (15m) | Active Recall Pre-Test**: Answer the conceptual questions below before reading further.
-- **00:15 – 00:40 (25m) | YouTube Conceptual Anchor**: Watch the curated video segment on multi-source BFS and graph connectivity.
-- **00:40 – 01:30 (50m) | Coding Deep Dive**: Pen-and-paper dry run of Rotting Oranges & Pacific Atlantic Water Flow.
-- **01:30 – 01:45 (15m) | Post-Session Flashcards**: Complete the flashcard prompts from memory.
+> **Estimated Time**: 11 Days • **Pace**: 1.5–2 hours/day (Strictly 1 problem/day) • **Language**: C# (.NET 6+)
 
 ---
 
-## 1. Active Recall Pre-Test (15 Minutes)
-Attempt to answer these questions on paper before expanding the solutions.
+## 🛠️ C# Mental Model & Gotchas
+
+### 1. Explicit Graph Representation in C#
+- **Adjacency List**: Always use array of lists `List<int>[] graph = new List<int>[n]` instead of `Dictionary<int, List<int>>` when nodes are $0$-indexed integers. It provides $O(1)$ random access without hashing overhead.
+```csharp
+List<int>[] graph = new List<int>[n];
+for (int i = 0; i < n; i++) graph[i] = new List<int>();
+foreach (var edge in edges) {
+    graph[edge[0]].Add(edge[1]);
+    graph[edge[1]].Add(edge[0]); // if undirected
+}
+```
+
+### 2. Implicit Grid Traversals & Direction Vectors
+In grid problems, avoid copy-pasting four directional calls. Use compact direction arrays:
+```csharp
+int[] dr = { -1, 1, 0, 0 };
+int[] dc = { 0, 0, -1, 1 };
+for (int i = 0; i < 4; i++) {
+    int nr = r + dr[i];
+    int nc = c + dc[i];
+    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr, nc]) {
+        // process neighbor
+    }
+}
+```
+
+### 3. Multi-Source BFS Invariant
+When calculating shortest paths from multiple simultaneous starting points (e.g. `Rotting Oranges`, `Walls and Gates`):
+- Enqueue **all initial source nodes into the BFS queue at time 0**.
+- Mark them visited immediately upon enqueuing to prevent duplicate processing.
+- A single BFS queue guarantees that nodes are visited in strictly non-decreasing order of distance.
+
+---
+
+## 📅 Day-by-Day Schedule
+
+### Day 1: Theory Anchor & Baseline Pattern
+- **Step 1 (45 mins) | Concept Video**: [Graph Traversal BFS and DFS](https://www.youtube.com/watch?v=pcKY4hjDrxk) by *Abdul Bari*
+  - Key focus: What is the difference between BFS (level exploration via Queue) and DFS (branch exploration via recursion/stack)?
+- **Step 2 (20 mins) | Pen & Paper Invariant**:
+  - Draw a $4 \times 5$ island matrix. Manually trace the DFS flood-fill that converts land `'1'` to water `'0'`.
+- **Step 3 (45 mins) | Problem 1 (Warm-Up)**:
+  - [Number of Islands](https://leetcode.com/problems/number-of-islands/) (NeetCode - Medium)
+  - Objective: In-place flood fill marking visited cells.
+- **Step 4 (10 mins) | Active Recall**:
+  <details>
+  <summary><b>🧠 Self-Test: When running BFS, at what exact moment should a node be marked as visited?</b></summary>
+  <br>
+  <b>Answer:</b> Immediately upon being <b>enqueued</b> into the queue, NEVER when it is dequeued! If you mark nodes as visited upon dequeuing, multiple paths can enqueue the same node multiple times, causing exponential memory blowup and TLE.
+  </details>
+
+---
+
+### Day 2: Connected Component Area Aggregation
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How does DFS aggregate the total area of an island?</b></summary>
+  <br>
+  <b>Answer:</b> The base case returns 0 for water/out-of-bounds cells. For a valid land cell, mark it as visited and return $1 + \sum \text{DFS}(\text{all 4 neighbors})$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 2**:
+  - [Max Area of Island](https://leetcode.com/problems/max-area-of-island/) (NeetCode - Medium)
+  - Thinking prompts: In-place mutation `grid[r][c] = 0` avoids allocating a visited array.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int MaxAreaOfIsland(int[][] grid) {
+          int maxArea = 0;
+          for (int r = 0; r < grid.Length; r++) {
+              for (int c = 0; c < grid[0].Length; c++) {
+                  if (grid[r][c] == 1) {
+                      maxArea = Math.Max(maxArea, Dfs(r, c, grid));
+                  }
+              }
+          }
+          return maxArea;
+      }
+      
+      private int Dfs(int r, int c, int[][] grid) {
+          if (r < 0 || r >= grid.Length || c < 0 || c >= grid[0].Length || grid[r][c] == 0) {
+              return 0;
+          }
+          
+          grid[r][c] = 0; // Mark visited
+          return 1 + Dfs(r + 1, c, grid) + Dfs(r - 1, c, grid) +
+                     Dfs(r, c + 1, grid) + Dfs(r, c - 1, grid);
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(M \cdot N)$, Space: $O(M \cdot N)$ recursion depth.
+  </details>
+
+---
+
+### Day 3: Graph Deep Copy & Reference Mapping (Clone Graph)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How do you handle cycles when cloning a graph with DFS or BFS?</b></summary>
+  <br>
+  <b>Answer:</b> Maintain a <code>Dictionary&lt;Node, Node&gt;</code> mapping each original node to its newly created clone. If an encountered neighbor already exists in the dictionary, reuse the existing cloned node reference instead of re-cloning.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 3**:
+  - [Clone Graph](https://leetcode.com/problems/clone-graph/) (NeetCode - Medium)
+  - Thinking prompts: Map original `Node` to cloned `Node`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      private readonly Dictionary<Node, Node> _clones = new();
+
+      public Node CloneGraph(Node node) {
+          if (node == null) return null;
+          if (_clones.TryGetValue(node, out var clone)) return clone;
+          
+          Node copy = new(node.val);
+          _clones[node] = copy;
+          
+          foreach (var neighbor in node.neighbors) {
+              copy.neighbors.Add(CloneGraph(neighbor));
+          }
+          return copy;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(V + E)$, Space: $O(V)$ auxiliary dictionary and stack.
+  </details>
+
+---
+
+### Day 4: Reverse Reachability from Ocean Boundaries
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why is searching outward from the Pacific and Atlantic ocean borders $O(M \cdot N)$ while searching from each cell to the ocean is $O(M^2 \cdot N^2)$?</b></summary>
+  <br>
+  <b>Answer:</b> Starting from oceans allows us to walk "uphill" ($\text{neighbor} \ge \text{current}$) once for each ocean into two boolean matrices <code>pacificReachable</code> and <code>atlanticReachable</code>. The intersection cells are those that can reach both.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 4**:
+  - [Pacific Atlantic Water Flow](https://leetcode.com/problems/pacific-atlantic-water-flow/) (NeetCode - Medium)
+  - Thinking prompts: Run two multi-source DFS/BFS passes from Pacific and Atlantic borders.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public IList<IList<int>> PacificAtlantic(int[][] heights) {
+          int m = heights.Length, n = heights[0].Length;
+          bool[,] pac = new bool[m, n];
+          bool[,] atl = new bool[m, n];
+          
+          for (int c = 0; c < n; c++) {
+              Dfs(0, c, pac, heights[0][c], heights);
+              Dfs(m - 1, c, atl, heights[m - 1][c], heights);
+          }
+          for (int r = 0; r < m; r++) {
+              Dfs(r, 0, pac, heights[r][0], heights);
+              Dfs(r, n - 1, atl, heights[r][n - 1], heights);
+          }
+          
+          List<IList<int>> result = new();
+          for (int r = 0; r < m; r++) {
+              for (int c = 0; c < n; c++) {
+                  if (pac[r, c] && atl[r, c]) {
+                      result.Add(new List<int> { r, c });
+                  }
+              }
+          }
+          return result;
+      }
+      
+      private void Dfs(int r, int c, bool[,] ocean, int prevHeight, int[][] heights) {
+          if (r < 0 || r >= heights.Length || c < 0 || c >= heights[0].Length) return;
+          if (ocean[r, c] || heights[r][c] < prevHeight) return;
+          
+          ocean[r, c] = true;
+          Dfs(r + 1, c, ocean, heights[r][c], heights);
+          Dfs(r - 1, c, ocean, heights[r][c], heights);
+          Dfs(r, c + 1, ocean, heights[r][c], heights);
+          Dfs(r, c - 1, ocean, heights[r][c], heights);
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(M \cdot N)$, Space: $O(M \cdot N)$.
+  </details>
+
+---
+
+### Day 5: Boundary Flood-Fill & Inversion (Surrounded Regions)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Which 'O' cells can NEVER be captured in Surrounded Regions?</b></summary>
+  <br>
+  <b>Answer:</b> Any 'O' connected directly or indirectly to the outer boundary of the board.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 5**:
+  - [Surrounded Regions](https://leetcode.com/problems/surrounded-regions/) (NeetCode - Medium)
+  - Thinking prompts: 1. Flood-fill from border `'O'`s changing them to `'T'`; 2. Flip all remaining `'O'` to `'X'`; 3. Restore `'T'` back to `'O'`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public void Solve(char[][] board) {
+          int m = board.Length, n = board[0].Length;
+          
+          // Phase 1: Mark non-surrounded boundary regions as 'T'
+          for (int r = 0; r < m; r++) {
+              Dfs(r, 0, board);
+              Dfs(r, n - 1, board);
+          }
+          for (int c = 0; c < n; c++) {
+              Dfs(0, c, board);
+              Dfs(m - 1, c, board);
+          }
+          
+          // Phase 2: Invert surrounded 'O' -> 'X' and restore 'T' -> 'O'
+          for (int r = 0; r < m; r++) {
+              for (int c = 0; c < n; c++) {
+                  if (board[r][c] == 'O') board[r][c] = 'X';
+                  else if (board[r][c] == 'T') board[r][c] = 'O';
+              }
+          }
+      }
+      
+      private void Dfs(int r, int c, char[][] board) {
+          if (r < 0 || r >= board.Length || c < 0 || c >= board[0].Length || board[r][c] != 'O') {
+              return;
+          }
+          board[r][c] = 'T';
+          Dfs(r + 1, c, board);
+          Dfs(r - 1, c, board);
+          Dfs(r, c + 1, board);
+          Dfs(r, c - 1, board);
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(M \cdot N)$, Space: $O(M \cdot N)$ recursion depth.
+  </details>
+
+---
+
+### Day 6: Multi-Source Simultaneous BFS (Rotting Oranges)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Rotting Oranges, why can standard single-source BFS or DFS fail to compute the minimum elapsed time?</b></summary>
+  <br>
+  <b>Answer:</b> Multiple rotten oranges rot adjacent fresh oranges simultaneously. Enqueuing all rotten oranges at time $0$ simulates parallel time steps.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 6**:
+  - [Rotting Oranges](https://leetcode.com/problems/rotting-oranges/) (NeetCode - Medium)
+  - Thinking prompts: Count initial fresh oranges. Enqueue all rotten cells `(r, c)` at time 0. Process BFS in level waves.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int OrangesRotting(int[][] grid) {
+          int m = grid.Length, n = grid[0].Length;
+          Queue<(int r, int c)> queue = new();
+          int fresh = 0;
+          
+          for (int r = 0; r < m; r++) {
+              for (int c = 0; c < n; c++) {
+                  if (grid[r][c] == 2) queue.Enqueue((r, c));
+                  else if (grid[r][c] == 1) fresh++;
+              }
+          }
+          
+          if (fresh == 0) return 0;
+          
+          int minutes = -1;
+          int[] dr = { -1, 1, 0, 0 };
+          int[] dc = { 0, 0, -1, 1 };
+          
+          while (queue.Count > 0) {
+              int levelSize = queue.Count;
+              minutes++;
+              
+              for (int i = 0; i < levelSize; i++) {
+                  var (r, c) = queue.Dequeue();
+                  for (int d = 0; d < 4; d++) {
+                      int nr = r + dr[d];
+                      int nc = c + dc[d];
+                      
+                      if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] == 1) {
+                          grid[nr][nc] = 2; // Mark rotten
+                          fresh--;
+                          queue.Enqueue((nr, nc));
+                      }
+                  }
+              }
+          }
+          return fresh == 0 ? minutes : -1;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(M \cdot N)$, Space: $O(M \cdot N)$.
+  </details>
+
+---
+
+### Day 7: Reverse Distance Propagation (Walls and Gates)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Walls and Gates, why do we start BFS from Gates instead of Rooms?</b></summary>
+  <br>
+  <b>Answer:</b> Searching from each room takes $O(R \times M \cdot N)$. Searching simultaneously from all gates takes $O(M \cdot N)$ total time because each empty room is updated with its shortest distance on the first visit.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 7**:
+  - [Walls and Gates](https://leetcode.com/problems/walls-and-gates/) (NeetCode - Medium)
+  - Thinking prompts: Enqueue all cells equal to `0` (gates). Distance updates to `rooms[r][c] + 1`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public void WallsAndGates(int[][] rooms) {
+          int m = rooms.Length, n = rooms[0].Length;
+          Queue<(int r, int c)> queue = new();
+          
+          for (int r = 0; r < m; r++) {
+              for (int c = 0; c < n; c++) {
+                  if (rooms[r][c] == 0) {
+                      queue.Enqueue((r, c));
+                  }
+              }
+          }
+          
+          int[] dr = { -1, 1, 0, 0 };
+          int[] dc = { 0, 0, -1, 1 };
+          
+          while (queue.Count > 0) {
+              var (r, c) = queue.Dequeue();
+              for (int i = 0; i < 4; i++) {
+                  int nr = r + dr[i];
+                  int nc = c + dc[i];
+                  
+                  if (nr >= 0 && nr < m && nc >= 0 && nc < n && rooms[nr][nc] == 2147483647) {
+                      rooms[nr][nc] = rooms[r][c] + 1;
+                      queue.Enqueue((nr, nc));
+                  }
+              }
+          }
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(M \cdot N)$, Space: $O(M \cdot N)$.
+  </details>
+
+---
+
+### Day 8: Cycle Detection in Directed Graphs (Course Schedule)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why is a simple boolean <code>visited[]</code> array insufficient for cycle detection in a directed graph?</b></summary>
+  <br>
+  <b>Answer:</b> In a directed graph, visiting an already visited node is not a cycle unless that node is currently part of the active recursion stack! We need a 3-color state: unvisited (0), currently visiting (1), and finished (2).
+  </details>
+- **Deep Practice (75–85 mins) | Problem 8**:
+  - [Course Schedule](https://leetcode.com/problems/course-schedule/) (NeetCode - Medium)
+  - Thinking prompts: Use 3-state tracking (`0 = unvisited`, `1 = visiting`, `2 = visited`) or Kahn's indegree BFS algorithm.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public bool CanFinish(int numCourses, int[][] prerequisites) {
+          List<int>[] graph = new List<int>[numCourses];
+          for (int i = 0; i < numCourses; i++) graph[i] = new List<int>();
+          
+          foreach (var pre in prerequisites) {
+              graph[pre[1]].Add(pre[0]);
+          }
+          
+          int[] state = new int[numCourses]; // 0: unvisited, 1: visiting, 2: visited
+          for (int i = 0; i < numCourses; i++) {
+              if (HasCycle(i, graph, state)) return false;
+          }
+          return true;
+      }
+      
+      private bool HasCycle(int u, List<int>[] graph, int[] state) {
+          if (state[u] == 1) return true;  // Found back-edge to ancestor in call stack
+          if (state[u] == 2) return false; // Already verified acyclic
+          
+          state[u] = 1; // Mark visiting
+          foreach (int v in graph[u]) {
+              if (HasCycle(v, graph, state)) return true;
+          }
+          state[u] = 2; // Mark finished
+          return false;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(V + E)$, Space: $O(V + E)$.
+  </details>
+
+---
+
+### Day 9: Abstract State Space BFS (Open the Lock)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How many transitions exist from any 4-digit lock state like <code>"0000"</code>?</b></summary>
+  <br>
+  <b>Answer:</b> Exactly 8 transitions (each of the 4 wheels can be rotated +1 or -1 modulo 10).
+  </details>
+- **Deep Practice (75–85 mins) | Problem 9**:
+  - [Open the Lock](https://leetcode.com/problems/open-the-lock/) (LeetCode 752 - Medium)
+  - Thinking prompts: Put deadends into a `HashSet<string>`. Run standard BFS on 4-digit strings.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int OpenLock(string[] deadends, string target) {
+          HashSet<string> dead = new(deadends);
+          if (dead.Contains("0000")) return -1;
+          if (target == "0000") return 0;
+          
+          Queue<string> queue = new();
+          HashSet<string> visited = new();
+          queue.Enqueue("0000");
+          visited.Add("0000");
+          
+          int turns = 0;
+          while (queue.Count > 0) {
+              int count = queue.Count;
+              turns++;
+              
+              for (int i = 0; i < count; i++) {
+                  string curr = queue.Dequeue();
+                  foreach (string next in GetNeighbors(curr)) {
+                      if (next == target) return turns;
+                      if (!dead.Contains(next) && visited.Add(next)) {
+                          queue.Enqueue(next);
+                      }
+                  }
+              }
+          }
+          return -1;
+      }
+      
+      private IEnumerable<string> GetNeighbors(string s) {
+          char[] arr = s.ToCharArray();
+          for (int i = 0; i < 4; i++) {
+              char orig = arr[i];
+              arr[i] = orig == '9' ? '0' : (char)(orig + 1);
+              yield return new string(arr);
+              arr[i] = orig == '0' ? '9' : (char)(orig - 1);
+              yield return new string(arr);
+              arr[i] = orig;
+          }
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(10^4 \cdot 8)$, Space: $O(10^4)$.
+  </details>
+
+---
+
+### Day 10: Pattern Graph Shortest Path (Word Ladder)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Word Ladder with $N$ words of length $L$, why is checking all pairs $O(N^2 \cdot L)$ suboptimal, and how do wildcard patterns help?</b></summary>
+  <br>
+  <b>Answer:</b> By mapping words to wildcard patterns (e.g. <code>*ot</code>, <code>h*t</code>, <code>ho*</code>) in a <code>Dictionary&lt;string, List&lt;string&gt;&gt;</code>, graph construction and neighbor lookup drop to $O(N \cdot L^2)$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 10**:
+  - [Word Ladder](https://leetcode.com/problems/word-ladder/) (NeetCode - Hard)
+  - Thinking prompts: Bi-directional BFS or standard BFS level tracking.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int LadderLength(string beginWord, string endWord, IList<string> wordList) {
+          HashSet<string> wordSet = new(wordList);
+          if (!wordSet.Contains(endWord)) return 0;
+          
+          Queue<string> queue = new();
+          queue.Enqueue(beginWord);
+          int step = 1;
+          
+          while (queue.Count > 0) {
+              int size = queue.Count;
+              step++;
+              
+              for (int i = 0; i < size; i++) {
+                  char[] curr = queue.Dequeue().ToCharArray();
+                  for (int j = 0; j < curr.Length; j++) {
+                      char original = curr[j];
+                      for (char c = 'a'; c <= 'z'; c++) {
+                          if (c == original) continue;
+                          curr[j] = c;
+                          string next = new string(curr);
+                          
+                          if (next == endWord) return step;
+                          if (wordSet.Remove(next)) {
+                              queue.Enqueue(next);
+                          }
+                      }
+                      curr[j] = original;
+                  }
+              }
+          }
+          return 0;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(M^2 \cdot N)$ where $M$ is word length and $N$ is word list count. Space: $O(M \cdot N)$.
+  </details>
+
+---
+
+### Day 11: CSES & Competitive Benchmarks + Spaced Retrieval
+- **Benchmark 1**: [CSES: Counting Rooms](https://cses.fi/problemset/task/1192) (Number of Islands on massive $1000 \times 1000$ grid)
+- **Benchmark 2**: [CSES: Labyrinth](https://cses.fi/problemset/task/1193) (BFS shortest path with predecessor tracking)
+- **Benchmark 3**: [CSES: Building Roads](https://cses.fi/problemset/task/1666) (Finding connected components and connecting bridges)
+- **Benchmark 4**: [CSES: Message Route](https://cses.fi/problemset/task/1667) (Unweighted shortest path in communication network)
+- **Benchmark 5**: [Codeforces 520B - Two Buttons](https://codeforces.com/problemset/problem/520/B) (BFS on numerical operations)
+
+---
+
+### Spaced Retrieval Flashcards
 
 <details>
-<summary><strong>Prompt 1: Why does Breadth-First Search (BFS) guarantee the shortest path in an unweighted graph, whereas Depth-First Search (DFS) cannot?</strong></summary>
-
-BFS explores nodes strictly in non-decreasing order of their distance from the source: depth 0, depth 1, depth 2, etc. 
-Because all edges have uniform weight 1, the first time a node is reached and popped from the queue is guaranteed to be via the minimal number of edges. 
-In contrast, DFS explores along one path as deeply as possible before backtracking; it can reach a target node via a long, circuitous path before ever exploring a direct edge.
+<summary><b>Flashcard 1: When must you use BFS instead of DFS?</b></summary>
+<br>
+When searching for the <b>shortest path</b> in an unweighted graph or state space. BFS explores in concentric waves of equal distance, ensuring the first time the target is reached, it is via the minimum number of edges.
 </details>
 
 <details>
-<summary><strong>Prompt 2: What is the Multi-Source BFS pattern, and how does it prevent redundant traversals?</strong></summary>
-
-Instead of running separate BFS passes from each individual source ($K$ sources $\implies O(K \cdot (V + E))$), Multi-Source BFS initializes the BFS queue with **all sources simultaneously at time $t = 0$**, marking all of them as visited. 
-The wavefront expands uniformly from all sources in lockstep. Each vertex is visited at most once, achieving the optimal shortest distance to the *closest* source in $O(V + E)$ total time.
+<summary><b>Flashcard 2: How do you prevent stack overflow during large grid DFS in C#?</b></summary>
+<br>
+By replacing recursion with BFS using an explicit <code>Queue&lt;(int, int)&gt;</code>, or using an explicit <code>Stack&lt;(int, int)&gt;</code> allocated on the heap rather than consuming the thread's 1MB call stack.
 </details>
 
 <details>
-<summary><strong>Prompt 3: In grid problems with boundary constraints (e.g., Pacific Atlantic Water Flow, Surrounded Regions), why is reverse-traversal from the edges more efficient than testing every interior cell?</strong></summary>
-
-Testing from the interior requires initiating a new search from every cell $(r, c)$ to check if water can reach the boundary ($O((M \times N)^2)$ work).
-By reversing the problem—starting DFS/BFS directly from boundary cells and moving inwards to reach higher or uncaptured interior cells—each cell is visited at most once per boundary, reducing complexity to $O(M \times N)$.
+<summary><b>Flashcard 3: What is the purpose of the 3-color state in directed graph cycle detection?</b></summary>
+<br>
+State 0 (white) = unvisited; State 1 (grey) = currently on the active recursion stack; State 2 (black) = fully processed and confirmed acyclic. A cycle exists if and only if an edge points to a State 1 node (a back-edge).
 </details>
 
 ---
 
-## 2. YouTube Conceptual Anchor (25 Minutes)
+## 🎯 Topic Checklist (15 Problems)
 
-Recommended Video Anchors:
-1. **William Fiset**: [Graph Theory Introduction & BFS/DFS Grid Traversals](https://www.youtube.com/watch?v=09_LlHjoEiY) (22 mins)
-2. **NeetCode**: [Rotting Oranges Multi-Source BFS Intuition](https://www.youtube.com/watch?v=y704fEOx0i0) (12 mins)
-
-### Core Invariants & Mental Model
-1. **The Visited Invariant**: In any cyclic graph or grid, mark a cell as visited *at the moment it is pushed into the queue*, not when it is popped. Delaying until popping allows duplicate entries of the same node, leading to exponential memory bloat and TLE.
-2. **Direction Vectors**: Replace repetitive neighbor checks with standard coordinate delta arrays:
-   `DIRECTIONS = [(0, 1), (0, -1), (1, 0), (-1, 0)]`
-3. **Bipartite Invariant (2-Colorability)**: A graph is bipartite if and only if it contains **no odd-length cycles**. During BFS/DFS, color the start node with 0. For every neighbor, if uncolored, color with $1 - \text{current}$; if already colored with the same color, an odd cycle exists.
-
----
-
-## 3. Canonical Code Templates
-
-### Pattern A: Connected Components via Grid DFS ($O(M \times N)$ Time)
-```python
-from typing import List
-
-def num_islands(grid: List[List[str]]) -> int:
-    if not grid:
-        return 0
-        
-    rows, cols = len(grid), len(grid[0])
-    island_count = 0
-    
-    def dfs(r: int, c: int):
-        if r < 0 or r >= rows or c < 0 or c >= cols or grid[r][c] != "1":
-            return
-            
-        grid[r][c] = "0" # Sink island cell directly to save visited set space
-        dfs(r + 1, c)
-        dfs(r - 1, c)
-        dfs(r, c + 1)
-        dfs(r, c - 1)
-        
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == "1":
-                island_count += 1
-                dfs(r, c)
-                
-    return island_count
-```
-
-### Pattern B: Multi-Source BFS Wavefront ($O(M \times N)$ Time, $O(M \times N)$ Space)
-```python
-from collections import deque
-from typing import List
-
-def oranges_rotting(grid: List[List[int]]) -> int:
-    rows, cols = len(grid), len(grid[0])
-    queue = deque()
-    fresh_count = 0
-    
-    # 1. Enqueue all initial sources and count fresh targets
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == 2:
-                queue.append((r, c))
-            elif grid[r][c] == 1:
-                fresh_count += 1
-                
-    if fresh_count == 0:
-        return 0
-        
-    minutes = 0
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-    
-    # 2. Wavefront expansion
-    while queue and fresh_count > 0:
-        minutes += 1
-        for _ in range(len(queue)):
-            r, c = queue.popleft()
-            for dr, dc in directions:
-                nr, nc = r + dr, c + dc
-                if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 1:
-                    grid[nr][nc] = 2 # Mark visited / rotten
-                    fresh_count -= 1
-                    queue.append((nr, nc))
-                    
-    return minutes if fresh_count == 0 else -1
-```
-
----
-
-## 4. Coding Deep Dive: Worked Walkthrough (50 Minutes)
-
-### Problem: Rotting Oranges (LeetCode 994)
-**Problem Statement**: You are given an $m \times n$ grid where `0` is empty, `1` is fresh orange, and `2` is rotten orange. Every minute, any fresh orange 4-directionally adjacent to a rotten orange becomes rotten. Return the minimum minutes until no fresh orange remains, or `-1` if impossible.
-
-#### Pen-and-Paper Dry Run Trace
-Let grid be:
-```text
-[ [2, 1, 1],
-  [1, 1, 0],
-  [0, 1, 1] ]
-```
-Initial: `fresh_count = 6`. Queue at $t = 0$: `[(0, 0)]`.
-
-| Minute $t$ | Current Queue Tier | Neighbors Processed | Fresh Oranges Rotted | Remaining Fresh | Next Queue |
+| Day | # | Problem | Platform | Difficulty | Status |
 |:---:|:---:|:---|:---:|:---:|:---:|
-| 1 | `[(0, 0)]` | $(0, 1) \to 2$, $(1, 0) \to 2$ | 2 | 4 | `[(0, 1), (1, 0)]` |
-| 2 | `[(0, 1), (1, 0)]` | From $(0, 1): (0, 2) \to 2, (1, 1) \to 2$<br>From $(1, 0)$: none | 2 | 2 | `[(0, 2), (1, 1)]` |
-| 3 | `[(0, 2), (1, 1)]` | From $(1, 1): (2, 1) \to 2$ | 1 | 1 | `[(2, 1)]` |
-| 4 | `[(2, 1)]` | From $(2, 1): (2, 2) \to 2$ | 1 | **0** | `[(2, 2)]` |
-
-All fresh oranges rotted. Elapsed time: **4 minutes**.
-Time Complexity: $O(M \times N)$ as each cell is visited at most once.
-Space Complexity: $O(M \times N)$ for queue.
-
----
-
-## 5. Curated Problem Set (16 Problems)
-
-Track your daily solutions by checking off the markdown boxes.
-
-### NeetCode / LeetCode (Core)
-- [ ] [LeetCode 200: Number of Islands](https://leetcode.com/problems/number-of-islands/) | Medium | Connected Components DFS Sinking
-- [ ] [LeetCode 695: Max Area of Island](https://leetcode.com/problems/max-area-of-island/) | Medium | Area Accumulation Recursive DFS
-- [ ] [LeetCode 133: Clone Graph](https://leetcode.com/problems/clone-graph/) | Medium | Node Mapping Hash Table + DFS/BFS
-- [ ] [LeetCode 994: Rotting Oranges](https://leetcode.com/problems/rotting-oranges/) | Medium | Multi-Source BFS Wavefront
-- [ ] [LeetCode 417: Pacific Atlantic Water Flow](https://leetcode.com/problems/pacific-atlantic-water-flow/) | Medium | Reverse Boundary Search Intersection
-- [ ] [LeetCode 130: Surrounded Regions](https://leetcode.com/problems/surrounded-regions/) | Medium | Border-Connected Inverse DFS
-- [ ] [LeetCode 1091: Shortest Path in Binary Matrix](https://leetcode.com/problems/shortest-path-in-binary-matrix/) | Medium | 8-Directional BFS Shortest Path
-- [ ] [LeetCode 785: Is Graph Bipartite?](https://leetcode.com/problems/is-graph-bipartite/) | Medium | 2-Coloring BFS / Odd Cycle Detection
-- [ ] [LeetCode 127: Word Ladder](https://leetcode.com/problems/word-ladder/) | Hard | Bidirectional BFS / Word Transformation
-- [ ] [LeetCode 261: Graph Valid Tree](https://leetcode.com/problems/graph-valid-tree/) | Medium | $E = V - 1$ & Cycle-Free Connectivity
-
-### CSES Problem Set (Free Tier, No Login Wall)
-- [ ] [CSES 1192: Counting Rooms](https://cses.fi/problemset/task/1192) | Graph Algorithms | 2D Grid Room DFS
-- [ ] [CSES 1193: Labyrinth](https://cses.fi/problemset/task/1193) | Graph Algorithms | BFS Shortest Path with String Direction Reconstruction
-- [ ] [CSES 1666: Building Roads](https://cses.fi/problemset/task/1666) | Graph Algorithms | Component Leaders & Bridge Linking
-- [ ] [CSES 1667: Message Route](https://cses.fi/problemset/task/1667) | Graph Algorithms | Shortest Path Parent Pointers
-- [ ] [CSES 1194: Monsters](https://cses.fi/problemset/task/1194) | Graph Algorithms | Multi-Source BFS Monster Race Condition
-
-### Codeforces & AtCoder (Rating 800–1400)
-- [ ] [Codeforces 1033A: King Escape](https://codeforces.com/problemset/problem/1033/A) | 1000 | Chessboard Quadrant Graph Search
-- [ ] [Codeforces 580C: Kefa and Park](https://codeforces.com/problemset/problem/580/C) | 1500 | Tree DFS with Consecutive Cat Counter
+| Day 1 | 1 | [Number of Islands](https://leetcode.com/problems/number-of-islands/) | NeetCode | Medium | - [ ] |
+| Day 2 | 2 | [Max Area of Island](https://leetcode.com/problems/max-area-of-island/) | NeetCode | Medium | - [ ] |
+| Day 3 | 3 | [Clone Graph](https://leetcode.com/problems/clone-graph/) | NeetCode | Medium | - [ ] |
+| Day 4 | 4 | [Pacific Atlantic Water Flow](https://leetcode.com/problems/pacific-atlantic-water-flow/) | NeetCode | Medium | - [ ] |
+| Day 5 | 5 | [Surrounded Regions](https://leetcode.com/problems/surrounded-regions/) | NeetCode | Medium | - [ ] |
+| Day 6 | 6 | [Rotting Oranges](https://leetcode.com/problems/rotting-oranges/) | NeetCode | Medium | - [ ] |
+| Day 7 | 7 | [Walls and Gates](https://leetcode.com/problems/walls-and-gates/) | NeetCode | Medium | - [ ] |
+| Day 8 | 8 | [Course Schedule](https://leetcode.com/problems/course-schedule/) | NeetCode | Medium | - [ ] |
+| Day 9 | 9 | [Open the Lock](https://leetcode.com/problems/open-the-lock/) | LeetCode | Medium | - [ ] |
+| Day 10 | 10 | [Word Ladder](https://leetcode.com/problems/word-ladder/) | NeetCode | Hard | - [ ] |
+| Day 11 | 11 | [Counting Rooms](https://cses.fi/problemset/task/1192) | CSES | Easy | - [ ] |
+| Day 11 | 12 | [Labyrinth](https://cses.fi/problemset/task/1193) | CSES | Medium | - [ ] |
+| Day 11 | 13 | [Building Roads](https://cses.fi/problemset/task/1666) | CSES | Medium | - [ ] |
+| Day 11 | 14 | [Message Route](https://cses.fi/problemset/task/1667) | CSES | Medium | - [ ] |
+| Day 11 | 15 | [Two Buttons (520B)](https://codeforces.com/problemset/problem/520/B) | Codeforces | Rating 1000 | - [ ] |
 
 ---
 
-## 6. Post-Session Active Recall Flashcards (15 Minutes)
+[⬅️ Previous Topic: Backtracking](09-backtracking.md) | [Home](index.md) | [Next Topic: Graphs II: Topological Sort, Dijkstra & Union-Find ➡️](11-graphs-advanced.md)
 
-<details>
-<summary><strong>Flashcard 1: Why does Bidirectional BFS significantly outperform standard BFS in Word Ladder?</strong></summary>
-
-Standard BFS searches outward in a expanding sphere with branching factor $b$ and distance $d$, visiting roughly $O(b^d)$ states. 
-Bidirectional BFS runs two concurrent searches—one from `beginWord` and one from `endWord`—until their frontiers intersect. 
-Each search only reaches depth $d/2$, reducing total visited states to:
-$$O(b^{d/2} + b^{d/2}) = O(2 \cdot b^{d/2}) \ll O(b^d)$$
-For large search spaces, this cuts execution time by several orders of magnitude.
-</details>
-
-<details>
-<summary><strong>Flashcard 2: In CSES Labyrinth, how do you reconstruct the exact path string ("U", "D", "L", "R") after BFS completes?</strong></summary>
-
-Maintain a 2D array `parent[r][c]` which stores the coordinate `(prev_r, prev_c)` and the move taken to reach `(r, c)`. 
-Once target $B$ is reached, backtrack from $B$ through `parent` until reaching starting point $A$. 
-Collect the directions in reverse order, then reverse the final string.
-</details>
-
-<details>
-<summary><strong>Flashcard 3: What condition determines whether an undirected graph is a valid tree?</strong></summary>
-
-An undirected graph with $V$ vertices is a valid tree if and only if:
-1. It has exactly $V - 1$ edges: $|E| = |V| - 1$.
-2. It is completely connected (single connected component via BFS/DFS).
-These two conditions together mathematically preclude cycles and disconnected partitions.
-</details>
-
----
-
-[← Topic 09: Backtracking](09-backtracking.md) \| [Next Topic: Graphs II (Advanced) →](11-graphs-advanced.md)

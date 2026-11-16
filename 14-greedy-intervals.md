@@ -1,205 +1,461 @@
 ---
-layout: default
-title: "Topic 14: Greedy Algorithms & Intervals"
+layout: page
+title: "Greedy Algorithms & Intervals"
+permalink: /greedy-intervals/
 ---
 
-# Topic 14: Greedy Algorithms & Intervals
+# Greedy Algorithms & Intervals
 
-[← Topic 13: 2-D Dynamic Programming](13-2d-dp.md) \| [Schedule](schedule.md) \| [Next: Bit Manipulation & Core Math →](15-bit-manipulation-math.md)
-
----
-
-## Daily Timeboxing (1.5 – 2.0 Hours)
-- **00:00 – 00:15 (15m) | Active Recall Pre-Test**: Answer the conceptual questions below before reading further.
-- **00:15 – 00:40 (25m) | YouTube Conceptual Anchor**: Watch the curated video segment on greedy choice invariants and interval scheduling.
-- **00:40 – 01:30 (50m) | Coding Deep Dive**: Pen-and-paper dry run of Non-overlapping Intervals & Merge Intervals.
-- **01:30 – 01:45 (15m) | Post-Session Flashcards**: Complete the flashcard prompts from memory.
+> **Estimated Time**: 11 Days • **Pace**: 1.5–2 hours/day (Strictly 1 problem/day) • **Language**: C# (.NET 6+)
 
 ---
 
-## 1. Active Recall Pre-Test (15 Minutes)
-Attempt to answer these questions on paper before expanding the solutions.
+## 🛠️ C# Mental Model & Gotchas
 
-<details>
-<summary><strong>Prompt 1: What is the formal difference between a Greedy Algorithm and Dynamic Programming?</strong></summary>
+### 1. Sorting Invariants: Start Time vs End Time
+Interval problems live or die by the choice of sorting dimension:
+- **Interval Merging (`Merge Intervals`, `Insert Interval`)**: Sort by **START TIME** (`a[0].CompareTo(b[0])`). If the next interval starts before or at the current interval's end (`next[0] <= curr[1]`), merge them: `curr[1] = Math.Max(curr[1], next[1])`.
+- **Interval Scheduling (`Non-overlapping Intervals`, `Movie Festival`)**: Sort by **END TIME** (`a[1].CompareTo(b[1])`). Greedily picking the task that finishes earliest leaves maximum room for all subsequent tasks.
 
-Both paradigms solve problems with optimal substructure. 
-However, **Dynamic Programming** exhaustively considers multiple candidate decisions at each step and evaluates their downstream subproblem consequences before making a choice (caching overlapping states).
-A **Greedy Algorithm** makes a locally optimal choice at every step based on a static rule *without* exploring alternative branches or back-tracking, committing immediately to that choice. A greedy strategy is correct if and only if the **Greedy Choice Property** holds (a globally optimal solution can always be reached via locally optimal decisions).
-</details>
-
-<details>
-<summary><strong>Prompt 2: When solving the Interval Scheduling problem (maximizing non-overlapping intervals), why MUST intervals be sorted by their END times rather than START times?</strong></summary>
-
-Sorting by start times fails: an interval that starts early could have a massive duration that overlaps with and blocks hundreds of subsequent short intervals (e.g., `[0, 100]` vs `[1, 2], [2, 3], [3, 4]`).
-By sorting by **end time**, picking the interval that finishes earliest frees up the resource as soon as possible, leaving the maximum possible remaining time for all subsequent candidate intervals.
-</details>
-
-<details>
-<summary><strong>Prompt 3: How does the Jump Game (LeetCode 55) maintain an $O(1)$ space reachability horizon?</strong></summary>
-
-Maintain a scalar variable `max_reach` initialized to 0. 
-Iterate index $i$ through the array. 
-If $i > \text{max\_reach}$, index $i$ is unreachable, and we immediately return `False`. 
-Otherwise, update $\text{max\_reach} = \max(\text{max\_reach}, i + \text{nums}[i])$. 
-If `max_reach >= len(nums) - 1`, the end is reachable.
-</details>
-
----
-
-## 2. YouTube Conceptual Anchor (25 Minutes)
-
-Recommended Video Anchors:
-1. **Abdul Bari**: [Greedy Strategy & Interval Scheduling Knapsack](https://www.youtube.com/watch?v=ARvQcqJ_-NY) (22 mins)
-2. **NeetCode**: [Merge Intervals & Non-Overlapping Intervals](https://www.youtube.com/watch?v=44H3cEC2fFM) (15 mins)
-
-### Core Invariants & Mental Model
-1. **Start vs End Sorting Rule**:
-   - **Merge Intervals**: Sort by **start time** (`key=lambda x: x[0]`). If current interval starts before previous interval ends ($s_i \le e_{i-1}$), merge them: $e_{i-1} = \max(e_{i-1}, e_i)$.
-   - **Interval Scheduling (Remove min overlaps)**: Sort by **end time** (`key=lambda x: x[1]`). Greedily keep the interval with the earliest finish time.
-2. **Horizon Invariant (Jump Game II)**: Track `current_jump_end` and `farthest_reach`. When the loop index reaches `current_jump_end`, increment the jump counter and advance `current_jump_end = farthest_reach`.
-3. **Two-Pass Slope Invariant (Candy Problem)**: Ensure left-neighbor condition with a left-to-right pass; ensure right-neighbor condition with a right-to-left pass. Take $\max(\text{left}[i], \text{right}[i])$ at each position.
-
----
-
-## 3. Canonical Code Templates
-
-### Pattern A: Merge Intervals ($O(N \log N)$ Time, $O(N)$ Space)
-```python
-from typing import List
-
-def merge_intervals(intervals: List[List[int]]) -> List[List[int]]:
-    intervals.sort(key=lambda x: x[0]) # Sort by start time
-    merged = []
-    
-    for start, end in intervals:
-        # If merged is empty or no overlap, append new interval
-        if not merged or merged[-1][1] < start:
-            merged.append([start, end])
-        else:
-            # Overlap exists: extend the end of the previous interval
-            merged[-1][1] = max(merged[-1][1], end)
-            
-    return merged
+### 2. High-Performance Sweep-Line in C#
+To find the maximum concurrent overlapping intervals (e.g. `Meeting Rooms II`, `Restaurant Customers`):
+- Instead of using a priority queue, separate starts and ends into two flat arrays:
+```csharp
+int[] starts = new int[n];
+int[] ends = new int[n];
+// populate and sort independently
+Array.Sort(starts);
+Array.Sort(ends);
 ```
-
-### Pattern B: Non-Overlapping Intervals (Earliest End Time — $O(N \log N)$ Time)
-```python
-from typing import List
-
-def erase_overlap_intervals(intervals: List[List[int]]) -> int:
-    # Sort by end time to maximize remaining available room
-    intervals.sort(key=lambda x: x[1])
-    
-    removals = 0
-    prev_end = float('-inf')
-    
-    for start, end in intervals:
-        if start >= prev_end:
-            prev_end = end # Non-overlapping: keep this interval
-        else:
-            removals += 1  # Overlapping: greedily drop this interval
-            
-    return removals
-```
-
-### Pattern C: Greedy Reachability Horizon (Jump Game — $O(N)$ Time, $O(1)$ Space)
-```python
-from typing import List
-
-def can_jump(nums: List[int]) -> bool:
-    max_reach = 0
-    
-    for i, jump in enumerate(nums):
-        if i > max_reach:
-            return False # Trapped behind an unreachable gap
-            
-        max_reach = max(max_reach, i + jump)
-        if max_reach >= len(nums) - 1:
-            return True
-            
-    return True
-```
+Traverse both with two pointers: whenever `starts[s] < ends[e]`, a room is occupied (`count++`, `s++`); otherwise, a room is vacated (`count--`, `e++`). This avoids boxing and heap allocations entirely!
 
 ---
 
-## 4. Coding Deep Dive: Worked Walkthrough (50 Minutes)
+## 📅 Day-by-Day Schedule
 
-### Problem: Non-Overlapping Intervals (LeetCode 435)
-**Problem Statement**: Given an array of intervals `intervals` where `intervals[i] = [start, end]`, return the minimum number of intervals you need to remove to make the rest of the intervals non-overlapping.
-
-#### Pen-and-Paper Dry Run Trace
-Let `intervals = [[1, 2], [2, 3], [3, 4], [1, 3]]`.
-1. Sort by end time: `[[1, 2], [2, 3], [1, 3], [3, 4]]`.
-Initialize: `prev_end = -inf`, `removals = 0`.
-
-| Step | Current Interval `[start, end]` | `start >= prev_end`? | Decision & Action | New `prev_end` | Total Removals |
-|:---:|:---:|:---:|:---|:---:|:---:|
-| 1 | `[1, 2]` | $1 \ge -\infty$ (**Yes**) | Keep interval | 2 | 0 |
-| 2 | `[2, 3]` | $2 \ge 2$ (**Yes**) | Keep interval | 3 | 0 |
-| 3 | `[1, 3]` | $1 \ge 3$ (**No**) | **Conflict!** Overlaps with `[2, 3]`. Drop `[1, 3]`. | 3 | **1** |
-| 4 | `[3, 4]` | $3 \ge 3$ (**Yes**) | Keep interval | 4 | 1 |
-
-Total Removals Required: **1** (Interval `[1, 3]` removed).
-Time Complexity: $O(N \log N)$ for sorting.
-Space Complexity: $O(1)$ auxiliary.
+### Day 1: Theory Anchor & Baseline Pattern (Kadane's Algorithm)
+- **Step 1 (45 mins) | Concept Video**: [Kadane's Algorithm Explained](https://www.youtube.com/watch?v=5WZl3MMT0Eg) by *NeetCode*
+  - Key focus: What is the greedy invariant? Why does discarding a negative prefix sum guarantee the optimal subarray ending at index $i$?
+- **Step 2 (20 mins) | Pen & Paper Invariant**:
+  - Trace `[-2, 1, -3, 4, -1, 2, 1, -5, 4]`. Track `curSum = Math.Max(n, curSum + n)` at every step.
+- **Step 3 (45 mins) | Problem 1 (Warm-Up)**:
+  - [Maximum Subarray](https://leetcode.com/problems/maximum-subarray/) (NeetCode - Medium)
+  - Objective: Single pass $O(N)$ time with $O(1)$ memory.
+- **Step 4 (10 mins) | Active Recall**:
+  <details>
+  <summary><b>🧠 Self-Test: When does Kadane's algorithm reset the running sum to 0?</b></summary>
+  <br>
+  <b>Answer:</b> Whenever the accumulated running sum drops below 0. A negative prefix can only diminish the sum of any subsequent contiguous subarray, so it is greedily abandoned.
+  </details>
 
 ---
 
-## 5. Curated Problem Set (15 Problems)
+### Day 2: Farthest Reach Horizon (Jump Game)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Jump Game, how do you verify if index $i$ is reachable?</b></summary>
+  <br>
+  <b>Answer:</b> Index $i$ is reachable if and only if $i \le \text{maxReach}$, where $\text{maxReach}$ is the maximum index reachable by any previously visited index: $\max_{j < i}(j + nums[j])$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 2**:
+  - [Jump Game](https://leetcode.com/problems/jump-game/) (NeetCode - Medium)
+  - Thinking prompts: Update `maxReach = Math.Max(maxReach, i + nums[i])`. If `i > maxReach`, return `false`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
 
-Track your daily solutions by checking off the markdown boxes.
-
-### NeetCode / LeetCode (Core)
-- [ ] [LeetCode 55: Jump Game](https://leetcode.com/problems/jump-game/) | Medium | Max Reachable Horizon
-- [ ] [LeetCode 45: Jump Game II](https://leetcode.com/problems/jump-game-ii/) | Medium | BFS Level Boundary Jumps
-- [ ] [LeetCode 56: Merge Intervals](https://leetcode.com/problems/merge-intervals/) | Medium | Start-Time Sorting & Boundary Extension
-- [ ] [LeetCode 57: Insert Interval](https://leetcode.com/problems/insert-interval/) | Medium | Linear Pass Splice & Merge
-- [ ] [LeetCode 435: Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals/) | Medium | Earliest Finish Time Greedy Removal
-- [ ] [LeetCode 135: Candy](https://leetcode.com/problems/candy/) | Hard | Two-Pass Slope Value Assignment
-- [ ] [LeetCode 846: Hand of Straights](https://leetcode.com/problems/hand-of-straights/) | Medium | Min-Heap / TreeMap Consecutive Sequence Verification
-- [ ] [LeetCode 763: Partition Labels](https://leetcode.com/problems/partition-labels/) | Medium | Last Seen Index Boundary Absorption
-- [ ] [LeetCode 678: Valid Parenthesis String](https://leetcode.com/problems/valid-parenthesis-string/) | Medium | Dual Range Min/Max Open Bracket Counters
-- [ ] [LeetCode 1899: Merge Triplets to Form Target Triplet](https://leetcode.com/problems/merge-triplets-to-form-target-triplet/) | Medium | Invalid Triplet Elimination Filter
-
-### CSES Problem Set (Free Tier, No Login Wall)
-- [ ] [CSES 1629: Movie Festival](https://cses.fi/problemset/task/1629) | Sorting & Searching | Classic Activity Selection Earliest End Time
-- [ ] [CSES 1630: Tasks and Deadlines](https://cses.fi/problemset/task/1630) | Sorting & Searching | Shortest Duration First Reward Maximization
-- [ ] [CSES 1631: Reading Books](https://cses.fi/problemset/task/1631) | Sorting & Searching | Max Element Dominance Threshold Check
-
-### Codeforces & AtCoder (Rating 800–1400)
-- [ ] [Codeforces 1221C: Perfect Team](https://codeforces.com/problemset/problem/1221/C) | 1100 | Math & Greedy Student Pairing
-- [ ] [AtCoder ABC103_D: Islands War](https://atcoder.jp/contests/abc103/tasks/abc103_d) | 1200 | Interval End Cut Bridge Removal
+  ```csharp
+  public class Solution {
+      public bool CanJump(int[] nums) {
+          int maxReach = 0;
+          for (int i = 0; i < nums.Length; i++) {
+              if (i > maxReach) return false;
+              maxReach = Math.Max(maxReach, i + nums[i]);
+              if (maxReach >= nums.Length - 1) return true;
+          }
+          return true;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$.
+  </details>
 
 ---
 
-## 6. Post-Session Active Recall Flashcards (15 Minutes)
+### Day 3: BFS-Window Leapfrogging (Jump Game II)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How can Jump Game II be modeled as a BFS level traversal without a queue?</b></summary>
+  <br>
+  <b>Answer:</b> Maintain current jump window $[curEnd, farthest]$. When index $i$ reaches $curEnd$, increment jumps and update $curEnd = farthest$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 3**:
+  - [Jump Game II](https://leetcode.com/problems/jump-game-ii/) (NeetCode - Medium)
+  - Thinking prompts: Find minimum jumps to reach end.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int Jump(int[] nums) {
+          int jumps = 0, curEnd = 0, farthest = 0;
+          
+          for (int i = 0; i < nums.Length - 1; i++) {
+              farthest = Math.Max(farthest, i + nums[i]);
+              if (i == curEnd) {
+                  jumps++;
+                  curEnd = farthest;
+                  if (curEnd >= nums.Length - 1) break;
+              }
+          }
+          return jumps;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 4: Circular Deficit Reset (Gas Station)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Gas Station, if starting at station $A$ fails to reach station $B$, why can no station between $A$ and $B$ be a valid start?</b></summary>
+  <br>
+  <b>Answer:</b> Any intermediate station $C$ between $A$ and $B$ had a non-negative fuel surplus upon arriving from $A$. If even with that surplus you couldn't reach $B$, starting empty at $C$ will fail even earlier!
+  </details>
+- **Deep Practice (75–85 mins) | Problem 4**:
+  - [Gas Station](https://leetcode.com/problems/gas-station/) (NeetCode - Medium)
+  - Thinking prompts: If `totalGas >= totalCost`, a unique solution is guaranteed to exist. Whenever `tank < 0`, reset `start = i + 1` and `tank = 0`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int CanCompleteCircuit(int[] gas, int[] cost) {
+          int totalTank = 0;
+          int currTank = 0;
+          int startStation = 0;
+          
+          for (int i = 0; i < gas.Length; i++) {
+              int net = gas[i] - cost[i];
+              totalTank += net;
+              currTank += net;
+              
+              if (currTank < 0) {
+                  startStation = i + 1;
+                  currTank = 0;
+              }
+          }
+          return totalTank >= 0 ? startStation : -1;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 5: Multi-Set Greedy Straights (Hand of Straights)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Hand of Straights, why must we start forming groups from the smallest remaining card?</b></summary>
+  <br>
+  <b>Answer:</b> The smallest card $X$ cannot be in the middle or end of any valid consecutive group; it MUST be the start of a group $(X, X+1, \dots, X+G-1)$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 5**:
+  - [Hand of Straights](https://leetcode.com/problems/hand-of-straights/) (NeetCode - Medium)
+  - Thinking prompts: Use `PriorityQueue<int, int>` or sort unique cards with a frequency `Dictionary<int, int>`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public bool IsNStraightHand(int[] hand, int groupSize) {
+          if (hand.Length % groupSize != 0) return false;
+          
+          Dictionary<int, int> count = new();
+          foreach (int card in hand) {
+              count[card] = count.GetValueOrDefault(card, 0) + 1;
+          }
+          
+          Array.Sort(hand);
+          foreach (int card in hand) {
+              if (count[card] == 0) continue;
+              
+              for (int i = 0; i < groupSize; i++) {
+                  int nextCard = card + i;
+                  if (count.GetValueOrDefault(nextCard, 0) == 0) {
+                      return false;
+                  }
+                  count[nextCard]--;
+              }
+          }
+          return true;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \log N)$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 6: Contiguous Interval Compaction (Merge Intervals)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Merge Intervals, when does interval $[s_2, e_2]$ overlap with current interval $[s_1, e_1]$ after sorting by start time?</b></summary>
+  <br>
+  <b>Answer:</b> When $s_2 \le e_1$. The merged interval becomes $[s_1, \max(e_1, e_2)]$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 6**:
+  - [Merge Intervals](https://leetcode.com/problems/merge-intervals/) (NeetCode - Medium)
+  - Thinking prompts: Sort intervals by start time `Array.Sort(intervals, (a, b) => a[0].CompareTo(b[0]))`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[][] Merge(int[][] intervals) {
+          Array.Sort(intervals, (a, b) => a[0].CompareTo(b[0]));
+          List<int[]> merged = new();
+          
+          int[] current = intervals[0];
+          merged.Add(current);
+          
+          for (int i = 1; i < intervals.Length; i++) {
+              if (intervals[i][0] <= current[1]) {
+                  current[1] = Math.Max(current[1], intervals[i][1]);
+              } else {
+                  current = intervals[i];
+                  merged.Add(current);
+              }
+          }
+          return merged.ToArray();
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \log N)$ sorting, Space: $O(N)$ for output.
+  </details>
+
+---
+
+### Day 7: Earliest Deadline Scheduling (Non-overlapping Intervals)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why sort by END TIME in Non-overlapping Intervals instead of start time?</b></summary>
+  <br>
+  <b>Answer:</b> The interval that finishes earliest frees up resources as soon as possible, leaving the maximum amount of remaining time for other intervals.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 7**:
+  - [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals/) (NeetCode - Medium)
+  - Thinking prompts: Sort by end time. If `intervals[i][0] < prevEnd`, an overlap exists, so increment removal count. Otherwise update `prevEnd = intervals[i][1]`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int EraseOverlapIntervals(int[][] intervals) {
+          Array.Sort(intervals, (a, b) => a[1].CompareTo(b[1]));
+          int removals = 0;
+          int prevEnd = intervals[0][1];
+          
+          for (int i = 1; i < intervals.Length; i++) {
+              if (intervals[i][0] < prevEnd) {
+                  removals++; // Must discard overlapping interval
+              } else {
+                  prevEnd = intervals[i][1];
+              }
+          }
+          return removals;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \log N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 8: Interval Conflict Checking (Meeting Rooms)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Can a person attend all meetings if one meeting ends at 10 and another starts at 10?</b></summary>
+  <br>
+  <b>Answer:</b> Yes, contiguous boundaries ($end_1 == start_2$) do not conflict unless the problem explicitly states closed intervals.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 8**:
+  - [Meeting Rooms](https://leetcode.com/problems/meeting-rooms/) (NeetCode - Easy)
+  - Thinking prompts: Sort by start time. Check if `intervals[i][0] < intervals[i - 1][1]`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public bool CanAttendMeetings(int[][] intervals) {
+          Array.Sort(intervals, (a, b) => a[0].CompareTo(b[0]));
+          for (int i = 1; i < intervals.Length; i++) {
+              if (intervals[i][0] < intervals[i - 1][1]) {
+                  return false;
+              }
+          }
+          return true;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \log N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 9: Two-Pointer Sweep-Line (Meeting Rooms II)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How does separating start and end times into two sorted arrays simulate room occupancy?</b></summary>
+  <br>
+  <b>Answer:</b> We don't care *which* specific meeting is using a room, only the global net count of in-progress meetings. Moving through sorted start times tracks new meetings, while moving through sorted end times tracks meeting completions.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 9**:
+  - [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/) (NeetCode - Medium)
+  - Thinking prompts: Array sorting + two pointers technique.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int MinMeetingRooms(int[][] intervals) {
+          int n = intervals.Length;
+          int[] starts = new int[n];
+          int[] ends = new int[n];
+          
+          for (int i = 0; i < n; i++) {
+              starts[i] = intervals[i][0];
+              ends[i] = intervals[i][1];
+          }
+          
+          Array.Sort(starts);
+          Array.Sort(ends);
+          
+          int rooms = 0, maxRooms = 0;
+          int s = 0, e = 0;
+          
+          while (s < n) {
+              if (starts[s] < ends[e]) {
+                  rooms++;
+                  maxRooms = Math.Max(maxRooms, rooms);
+                  s++;
+              } else {
+                  rooms--;
+                  e++;
+              }
+          }
+          return maxRooms;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \log N)$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 10: Greedy Character Range Partitioning (Partition Labels)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Partition Labels, what defines the minimum partition boundary containing character $C$?</b></summary>
+  <br>
+  <b>Answer:</b> The partition must extend at least to the **last occurrence index** of character $C$ in the string: <code>lastIndex[c - 'a']</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 10**:
+  - [Partition Labels](https://leetcode.com/problems/partition-labels/) (NeetCode - Medium)
+  - Thinking prompts: Pass 1: record last occurrence of each character. Pass 2: extend window boundary `end = Math.Max(end, last[s[i] - 'a'])`. When `i == end`, cut partition!
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public IList<int> PartitionLabels(string s) {
+          int[] last = new int[26];
+          for (int i = 0; i < s.Length; i++) {
+              last[s[i] - 'a'] = i;
+          }
+          
+          List<int> result = new();
+          int start = 0, end = 0;
+          
+          for (int i = 0; i < s.Length; i++) {
+              end = Math.Max(end, last[s[i] - 'a']);
+              if (i == end) {
+                  result.Add(end - start + 1);
+                  start = i + 1;
+              }
+          }
+          return result;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$ fixed 26 array.
+  </details>
+
+---
+
+### Day 11: CSES & Competitive Benchmarks + Spaced Retrieval
+- **Benchmark 1**: [CSES: Movie Festival](https://cses.fi/problemset/task/1629) (Optimal interval scheduling)
+- **Benchmark 2**: [CSES: Restaurant Customers](https://cses.fi/problemset/task/1619) (Sweep-line maximum overlapping intervals)
+- **Benchmark 3**: [CSES: Tasks and Deadlines](https://cses.fi/problemset/task/1630) (Greedy sorting by duration)
+- **Benchmark 4**: [Codeforces 455A - Boredom](https://codeforces.com/problemset/problem/455/A) (Frequency array + House Robber greedy DP)
+- **Benchmark 5**: [Codeforces 1352C - K-th Not Divisible by n](https://codeforces.com/problemset/problem/1352/C) (Math greedy offset)
+
+---
+
+### Spaced Retrieval Flashcards
 
 <details>
-<summary><strong>Flashcard 1: In Partition Labels (LeetCode 763), how do you decide where to cut a string into substrings so no letter appears in more than one partition?</strong></summary>
-
-1. First pass: Record the `last_index[char]` for every character in the string.
-2. Second pass: Maintain `end = 0` and `start = 0`. For each character at index $i$:
-   $$\text{end} = \max(\text{end}, \text{last\_index}[S[i]])$$
-   When $i == \text{end}$, all characters seen in $S[\text{start} \dots i]$ have their last appearances within this window. Cut the partition here, append $i - \text{start} + 1$ to the answer, and update $\text{start} = i + 1$.
+<summary><b>Flashcard 1: When does a Greedy algorithm yield an optimal solution over Dynamic Programming?</b></summary>
+<br>
+When the problem exhibits the <b>Greedy Choice Property</b> (a globally optimal solution can be reached by making a locally optimal choice without needing to reconsider or explore alternate branches).
 </details>
 
 <details>
-<summary><strong>Flashcard 2: How does the two-pass algorithm for Candy (LeetCode 135) ensure all constraints are satisfied?</strong></summary>
-
-Initialize `candies = [1] * N`.
-1. **Left-to-Right Pass**: If `ratings[i] > ratings[i - 1]`, set `candies[i] = candies[i - 1] + 1`. This satisfies the left neighbor condition.
-2. **Right-to-Left Pass**: If `ratings[i] > ratings[i + 1]`, set `candies[i] = max(candies[i], candies[i + 1] + 1)`. 
-Taking the maximum preserves the left neighbor constraint while strictly satisfying the right neighbor constraint. Total time: $O(N)$, space: $O(N)$.
+<summary><b>Flashcard 2: What is the primary difference in sorting strategy between Merging Intervals and Selecting Non-Overlapping Intervals?</b></summary>
+<br>
+When <b>merging</b> overlapping intervals, sort by <b>start time</b> to process contiguous sequential blocks. When <b>maximizing non-overlapping intervals</b>, sort by <b>end time</b> to greedily finish tasks as early as possible.
 </details>
 
 <details>
-<summary><strong>Flashcard 3: What is the Exchange Argument in greedy algorithm proofs?</strong></summary>
-
-A mathematical proof technique showing that any hypothetical optimal solution $OPT$ can be transformed into the greedy solution $G$ without worsening the objective value. 
-By considering the first position where $OPT$ differs from $G$ and swapping $OPT$'s choice with the greedy choice, we show the solution remains valid and at least as good. By induction, $G$ is globally optimal.
+<summary><b>Flashcard 3: Why is the two-pointer sweep-line method faster than a Min-Heap for Meeting Rooms II?</b></summary>
+<br>
+Sorting two plain arrays of size $N$ takes $O(N \log N)$ operations with high CPU cache locality and zero heap allocations. A priority queue performs $N$ separate enqueue/dequeue heap operations with higher per-element branching overhead.
 </details>
 
 ---
 
-[← Topic 13: 2-D Dynamic Programming](13-2d-dp.md) \| [Next Topic: Bit Manipulation & Core Math →](15-bit-manipulation-math.md)
+## 🎯 Topic Checklist (15 Problems)
+
+| Day | # | Problem | Platform | Difficulty | Status |
+|:---:|:---:|:---|:---:|:---:|:---:|
+| Day 1 | 1 | [Maximum Subarray](https://leetcode.com/problems/maximum-subarray/) | NeetCode | Medium | - [ ] |
+| Day 2 | 2 | [Jump Game](https://leetcode.com/problems/jump-game/) | NeetCode | Medium | - [ ] |
+| Day 3 | 3 | [Jump Game II](https://leetcode.com/problems/jump-game-ii/) | NeetCode | Medium | - [ ] |
+| Day 4 | 4 | [Gas Station](https://leetcode.com/problems/gas-station/) | NeetCode | Medium | - [ ] |
+| Day 5 | 5 | [Hand of Straights](https://leetcode.com/problems/hand-of-straights/) | NeetCode | Medium | - [ ] |
+| Day 6 | 6 | [Merge Intervals](https://leetcode.com/problems/merge-intervals/) | NeetCode | Medium | - [ ] |
+| Day 7 | 7 | [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals/) | NeetCode | Medium | - [ ] |
+| Day 8 | 8 | [Meeting Rooms](https://leetcode.com/problems/meeting-rooms/) | NeetCode | Easy | - [ ] |
+| Day 9 | 9 | [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/) | NeetCode | Medium | - [ ] |
+| Day 10 | 10 | [Partition Labels](https://leetcode.com/problems/partition-labels/) | NeetCode | Medium | - [ ] |
+| Day 11 | 11 | [Movie Festival](https://cses.fi/problemset/task/1629) | CSES | Easy | - [ ] |
+| Day 11 | 12 | [Restaurant Customers](https://cses.fi/problemset/task/1619) | CSES | Easy | - [ ] |
+| Day 11 | 13 | [Tasks and Deadlines](https://cses.fi/problemset/task/1630) | CSES | Easy | - [ ] |
+| Day 11 | 14 | [Boredom (455A)](https://codeforces.com/problemset/problem/455/A) | Codeforces | Rating 1500 | - [ ] |
+| Day 11 | 15 | [K-th Not Divisible by n (1352C)](https://codeforces.com/problemset/problem/1352/C) | Codeforces | Rating 1200 | - [ ] |
+
+---
+
+[⬅️ Previous Topic: 2-D Dynamic Programming](13-2d-dp.md) | [Home](index.md) | [Next Topic: Bit Manipulation & Math Fundamentals ➡️](15-bit-manipulation-math.md)
+

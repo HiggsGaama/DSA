@@ -1,4 +1,8 @@
+title: "C# DSA Mastery: Active Recall Roadmap"
+description: "A calm, 1.5 - 2 hour/day DSA course in C# based on NeetCode, CSES, and Codeforces."
 theme: minima
-title: "Mastering Data Structures & Algorithms"
-description: "A 24-week, active-recall-driven DSA curriculum designed for 1.5–2.0 hours/day."
-markdown: kramdown
+plugins:
+  - jekyll-feed
+
+header_pages:
+  - schedule.md

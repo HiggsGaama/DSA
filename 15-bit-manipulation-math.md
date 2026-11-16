@@ -1,205 +1,433 @@
 ---
-layout: default
-title: "Topic 15: Bit Manipulation & Core Math"
+layout: page
+title: "Bit Manipulation & Math Fundamentals"
+permalink: /bit-manipulation-math/
 ---
 
-# Topic 15: Bit Manipulation & Core Math
+# Bit Manipulation & Math Fundamentals
 
-[← Topic 14: Greedy & Intervals](14-greedy-intervals.md) \| [Schedule](schedule.md) \| [Home →](index.md)
-
----
-
-## Daily Timeboxing (1.5 – 2.0 Hours)
-- **00:00 – 00:15 (15m) | Active Recall Pre-Test**: Answer the conceptual questions below before reading further.
-- **00:15 – 00:40 (25m) | YouTube Conceptual Anchor**: Watch the curated video segment on bitwise invariants and binary exponentiation.
-- **00:40 – 01:30 (50m) | Coding Deep Dive**: Pen-and-paper dry run of Single Number III & Binary Exponentiation.
-- **01:30 – 01:45 (15m) | Post-Session Flashcards**: Complete the flashcard prompts from memory.
+> **Estimated Time**: 11 Days • **Pace**: 1.5–2 hours/day (Strictly 1 problem/day) • **Language**: C# (.NET 6+)
 
 ---
 
-## 1. Active Recall Pre-Test (15 Minutes)
-Attempt to answer these questions on paper before expanding the solutions.
+## 🛠️ C# Mental Model & Gotchas
 
-<details>
-<summary><strong>Prompt 1: What does the bitwise operation `n & (n - 1)` do, and why does it form the basis of Brian Kernighan’s algorithm?</strong></summary>
+### 1. The Core Bitwise Identities
+In C#, bitwise operations operate directly at the CPU register level:
+- **XOR Cancellation**: $x \oplus x = 0$ and $x \oplus 0 = x$.
+- **Clear Lowest Set Bit**: `n = n & (n - 1)`. Eliminates the least significant 1-bit in a single instruction (Brian Kernighan's Algorithm).
+- **Extract Lowest Set Bit**: `lowestBit = n & (-n)`. Leverages Two's Complement representation.
+- **Set Bit $i$**: `n |= (1 << i)`.
+- **Clear Bit $i$**: `n &= ~(1 << i)`.
+- **Toggle Bit $i$**: `n ^= (1 << i)`.
+- **Test Bit $i$**: `bool isSet = (n & (1 << i)) != 0`.
 
-Subtracting 1 from a binary number $n$ flips all the trailing zeros up to and including the lowest set bit (the rightmost 1-bit). 
-Performing a bitwise AND between $n$ and $n - 1$ leaves all higher bits unchanged while clearing that lowest set bit to 0:
-$$\text{Example: } n = 12 \ (1100_2), \quad n - 1 = 11 \ (1011_2), \quad n \ \& \ (n - 1) = 8 \ (1000_2)$$
-This guarantees that each iteration of `n = n & (n - 1)` eliminates exactly one set bit, allowing popcount to run in $O(\text{number of set bits})$ iterations rather than looping through all 32 or 64 bit positions.
-</details>
-
-<details>
-<summary><strong>Prompt 2: How does the bitwise expression `n & (-n)` isolate the lowest set bit of $n$?</strong></summary>
-
-In Two's Complement representation, the negative of a signed integer is formed by bitwise NOT followed by adding 1:
-$$-n = \sim n + 1$$
-Inverting $\sim n$ turns the lowest set bit of $n$ to 0 and all trailing zeros to 1s. Adding 1 carries through all those trailing 1s until it hits that lowest bit, turning it back to 1 and setting all bits below it to 0. 
-Performing $n \ \& \ (-n)$ results in a single bit set to 1 at the position of the lowest set bit, with all other bits being 0:
-$$\text{Example: } n = 12 \ (01100_2), \quad -n = -12 \ (10100_2), \quad n \ \& \ (-n) = 4 \ (00100_2)$$
-</details>
-
-<details>
-<summary><strong>Prompt 3: How does Binary Exponentiation compute $X^N \pmod M$ in $O(\log N)$ time instead of $O(N)$?</strong></summary>
-
-By exploiting the binary representation of exponent $N$:
-$$X^N = \begin{cases} (X^{N/2})^2 & \text{if } N \text{ is even} \\ X \cdot (X^{(N-1)/2})^2 & \text{if } N \text{ is odd} \end{cases}$$
-At each step, we square the base $X \leftarrow X^2 \pmod M$ and halve the exponent $N \leftarrow N // 2$. 
-Because $N$ is halved on every iteration, the computation terminates in exactly $\lfloor \log_2 N \rfloor$ steps, avoiding $O(N)$ linear multiplication.
-</details>
-
----
-
-## 2. YouTube Conceptual Anchor (25 Minutes)
-
-Recommended Video Anchors:
-1. **Errichto**: [Bitwise Operations in Competitive Programming](https://www.youtube.com/watch?v=xXKL9YBWgCY) (22 mins)
-2. **NeetCode**: [Single Number & Counting Bits Tricks](https://www.youtube.com/watch?v=qMPX1AOa83k) (14 mins)
-
-### Core Invariants & Mental Model
-1. **XOR Self-Inverse Invariant**:
-   $$A \oplus A = 0, \quad A \oplus 0 = A$$
-   Because XOR is commutative and associative, XORing an entire array cancels out all elements that appear an even number of times, leaving only the unique odd-frequency element.
-2. **Bitmask Set Representation**: An integer $M$ can represent a subset of up to 30 elements:
-   - Check membership of $i$: `(M >> i) & 1`
-   - Add $i$: `M |= (1 << i)`
-   - Remove $i$: `M &= ~(1 << i)`
-   - Toggle $i$: `M ^= (1 << i)`
-3. **Sieve of Eratosthenes Complexity**: Finding all primes up to $N$ marks composite multiples of each prime $p$. The total operations equal $\sum_{p \le N} \frac{N}{p} = O(N \log \log N)$.
-
----
-
-## 3. Canonical Code Templates
-
-### Pattern A: Brian Kernighan's Bit Counting ($O(K)$ Time where $K \le 32$)
-```python
-def hamming_weight(n: int) -> int:
-    count = 0
-    while n:
-        n &= (n - 1) # Drops the lowest set bit
-        count += 1
-    return count
+### 2. Modern .NET `BitOperations` Intrinsics
+Starting in .NET 6+, C# provides hardware-accelerated bit manipulation intrinsics via `System.Numerics.BitOperations`:
+```csharp
+int popCount = System.Numerics.BitOperations.PopCount((uint)n); // Hardware popcnt instruction
+int leadingZeros = System.Numerics.BitOperations.LeadingZeroCount((uint)n);
+int trailingZeros = System.Numerics.BitOperations.TrailingZeroCount((uint)n);
 ```
 
-### Pattern B: Single Number III (Two Unique Elements — $O(N)$ Time, $O(1)$ Space)
-```python
-from typing import List
-
-def single_number_three(nums: List[int]) -> List[int]:
-    # Step 1: XOR all numbers; result equals xor_sum = a ^ b
-    xor_sum = 0
-    for num in nums:
-        xor_sum ^= num
-        
-    # Step 2: Find any bit where a and b differ (use lowest set bit)
-    diff_bit = xor_sum & (-xor_sum)
-    
-    # Step 3: Partition elements into two groups based on diff_bit
-    a = 0
-    b = 0
-    for num in nums:
-        if num & diff_bit:
-            a ^= num
-        else:
-            b ^= num
-            
-    return [a, b]
-```
-
-### Pattern C: Binary Modular Exponentiation ($O(\log N)$ Time, $O(1)$ Space)
-```python
-def modular_pow(base: int, exp: int, mod: int) -> int:
-    result = 1
-    base %= mod
-    
-    while exp > 0:
-        # If exp is odd, multiply with current base
-        if exp & 1:
-            result = (result * base) % mod
-        base = (base * base) % mod
-        exp >>= 1 # Divide exponent by 2
-        
-    return result
+### 3. Signed vs Unsigned Shift Mechanics
+In C#, the right shift operator `>>` on a signed integer (`int`) performs an **arithmetic shift** (replicates the sign bit). To perform a **logical shift** (filling with zeros), cast to unsigned `uint` first:
+```csharp
+uint unsignedVal = (uint)signedVal;
+unsignedVal >>= 1;
 ```
 
 ---
 
-## 4. Coding Deep Dive: Worked Walkthrough (50 Minutes)
+## 📅 Day-by-Day Schedule
 
-### Problem: Single Number III (LeetCode 260)
-**Problem Statement**: Given an integer array `nums` in which exactly two elements appear only once and all other elements appear exactly twice, return the two elements in any order. Algorithm must run in $O(N)$ time and $O(1)$ space.
-
-#### Pen-and-Paper Dry Run Trace
-Let `nums = [1, 2, 1, 3, 2, 5]`.
-Two unique numbers to isolate: `3` ($011_2$) and `5` ($101_2$).
-
-| Step | Operation | Binary Representation | Result |
-|:---:|:---|:---:|:---:|
-| 1 | XOR entire array: $1 \oplus 2 \oplus 1 \oplus 3 \oplus 2 \oplus 5$ | - | $3 \oplus 5 = 6$ ($110_2$) |
-| 2 | Extract lowest set bit: `diff_bit = 6 & (-6)` | $110_2 \ \& \ 010_2$ | **`2` ($010_2$)** |
-| 3 | **Group 1** (`num & 2 != 0`): `[2, 3, 2]` | $2 \oplus 3 \oplus 2$ | **`3`** |
-| 4 | **Group 2** (`num & 2 == 0`): `[1, 1, 5]` | $1 \oplus 1 \oplus 5$ | **`5`** |
-
-Result: `[3, 5]`.
-Time Complexity: $O(N)$ two passes.
-Space Complexity: $O(1)$ auxiliary memory.
+### Day 1: Theory Anchor & Baseline Pattern (Single Number)
+- **Step 1 (45 mins) | Concept Video**: [Bit Manipulation & XOR Properties](https://www.youtube.com/watch?v=5Km3utixwZs) by *NeetCode*
+  - Key focus: What is XOR? Why does XOR across all array elements cancel duplicate pairs and preserve the single unique element?
+- **Step 2 (20 mins) | Pen & Paper Invariant**:
+  - Trace `[4, 1, 2, 1, 2]`. Write binary representations for each number. Trace cumulative XOR cancellation.
+- **Step 3 (45 mins) | Problem 1 (Warm-Up)**:
+  - [Single Number](https://leetcode.com/problems/single-number/) (NeetCode - Easy)
+  - Objective: Single pass $O(N)$ time with $O(1)$ memory using XOR.
+- **Step 4 (10 mins) | Active Recall**:
+  <details>
+  <summary><b>🧠 Self-Test: What are the three algebraic properties of XOR that allow it to cancel duplicates in any order?</b></summary>
+  <br>
+  <b>Answer:</b> 1. Commutative: $A \oplus B = B \oplus A$; 2. Associative: $(A \oplus B) \oplus C = A \oplus (B \oplus C)$; 3. Self-inverse: $A \oplus A = 0$ and $A \oplus 0 = A$.
+  </details>
 
 ---
 
-## 5. Curated Problem Set (15 Problems)
+### Day 2: Brian Kernighan's Invariant (Number of 1 Bits)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why does <code>n &amp; (n - 1)</code> clear the lowest set bit?</b></summary>
+  <br>
+  <b>Answer:</b> Subtracting 1 flips the rightmost set bit to 0 and all trailing zeros to 1. Performing bitwise AND with the original number cancels all trailing bits and turns off the rightmost set bit.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 2**:
+  - [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/) (NeetCode - Easy)
+  - Thinking prompts: Compare standard 32-iteration shift loop vs Brian Kernighan's loop running in $O(\text{set bits})$ steps.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
 
-Track your daily solutions by checking off the markdown boxes.
-
-### NeetCode / LeetCode (Core)
-- [ ] [LeetCode 136: Single Number](https://leetcode.com/problems/single-number/) | Easy | XOR Cancellation Invariant
-- [ ] [LeetCode 191: Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/) | Easy | Brian Kernighan Lowest Bit Clearing
-- [ ] [LeetCode 338: Counting Bits](https://leetcode.com/problems/counting-bits/) | Easy | Bitwise DP `dp[i] = dp[i >> 1] + (i & 1)`
-- [ ] [LeetCode 268: Missing Number](https://leetcode.com/problems/missing-number/) | Easy | XOR Index-Value Pairing / Gauss Sum
-- [ ] [LeetCode 190: Reverse Bits](https://leetcode.com/problems/reverse-bits/) | Easy | Bitwise Shift Reversal
-- [ ] [LeetCode 371: Sum of Two Integers](https://leetcode.com/problems/sum-of-two-integers/) | Medium | Half Adder Bitwise XOR & AND Carry
-- [ ] [LeetCode 137: Single Number II](https://leetcode.com/problems/single-number-ii/) | Medium | Modulo-3 Bit State Machine (`ones`, `twos`)
-- [ ] [LeetCode 260: Single Number III](https://leetcode.com/problems/single-number-iii/) | Medium | Lowest Set Bit Group Partitioning
-- [ ] [LeetCode 7: Reverse Integer](https://leetcode.com/problems/reverse-integer/) | Medium | 32-Bit Signed Overflow Boundaries
-- [ ] [LeetCode 50: Pow(x, n)](https://leetcode.com/problems/powx-n/) | Medium | Fast Binary Exponentiation
-
-### CSES Problem Set (Free Tier, No Login Wall)
-- [ ] [CSES 1068: Weird Algorithm](https://cses.fi/problemset/task/1068) | Introductory Problems | Collatz Conjecture Simulation
-- [ ] [CSES 1083: Missing Number](https://cses.fi/problemset/task/1083) | Introductory Problems | XOR Cancellation / Arithmetic Sum
-- [ ] [CSES 1095: Exponentiation](https://cses.fi/problemset/task/1095) | Mathematics | Fast Modular Exponentiation Modulo $10^9+7$
-- [ ] [CSES 1713: Counting Divisors](https://cses.fi/problemset/task/1713) | Mathematics | Sieve-Based Prime Factorization
-
-### Codeforces & AtCoder (Rating 800–1400)
-- [ ] [Codeforces 579A: Raising Bacteria](https://codeforces.com/problemset/problem/579/A) | 1000 | Set Bit Popcount Representation
-- [ ] [AtCoder ABC147_C: HonestOrUnkind2](https://atcoder.jp/contests/abc147/tasks/abc147_c) | 1100 | Bitmask Subset Consistency Verification
-
----
-
-## 6. Post-Session Active Recall Flashcards (15 Minutes)
-
-<details>
-<summary><strong>Flashcard 1: In Counting Bits (LeetCode 338), what $O(1)$ state transition generates the popcount for all numbers $0 \dots N$ in $O(N)$ total time?</strong></summary>
-
-$$dp[i] = dp[i \gg 1] + (i \ \& \ 1)$$
-Right-shifting $i$ by 1 bit ($i \gg 1$) removes the least significant bit, leaving a smaller integer whose bit count is already memoized in `dp`. Adding $i \ \& \ 1$ adds 1 if the removed bit was 1, and 0 if it was 0.
-</details>
-
-<details>
-<summary><strong>Flashcard 2: How does the bitwise half-adder in Sum of Two Integers (LeetCode 371) simulate addition without arithmetic operators?</strong></summary>
-
-$$\text{sum\_without\_carry} = a \oplus b$$
-$$\text{carry} = (a \ \& \ b) \ll 1$$
-Repeat until `carry == 0`. 
-In Python, integers have arbitrary precision, so bitmasks like `0xFFFFFFFF` are required to simulate 32-bit signed integer overflow.
-</details>
-
-<details>
-<summary><strong>Flashcard 3: How does the Sieve of Eratosthenes avoid redundant work by starting inner loops at $p^2$?</strong></summary>
-
-Any composite number $k < p^2$ that has $p$ as a divisor must also have another prime factor $q < p$. 
-That composite number was already marked when processing that smaller prime $q$. 
-Therefore, the first composite multiple of $p$ that has not yet been marked by any smaller prime is $p \times p = p^2$.
-</details>
+  ```csharp
+  public class Solution {
+      public int HammingWeight(uint n) {
+          int count = 0;
+          while (n != 0) {
+              n &= (n - 1); // Clears the lowest set bit
+              count++;
+          }
+          return count;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(K)$ where $K$ is count of 1-bits ($K \le 32$), Space: $O(1)$.
+  </details>
 
 ---
 
-[← Topic 14: Greedy & Intervals](14-greedy-intervals.md) \| [Schedule](schedule.md) \| [Back to Home →](index.md)
+### Day 3: Bitwise DP Recurrence (Counting Bits)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: What is the relationship between the 1-bits of number $i$ and number $i / 2$?</b></summary>
+  <br>
+  <b>Answer:</b> Shifting $i$ right by 1 bit (<code>i &gt;&gt; 1</code>) drops the least significant bit. Therefore: <code>dp[i] = dp[i &gt;&gt; 1] + (i &amp; 1)</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 3**:
+  - [Counting Bits](https://leetcode.com/problems/counting-bits/) (NeetCode - Easy)
+  - Thinking prompts: Populate `ans[i]` for all $i \in [0 \dots n]$ in $O(N)$ linear time.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[] CountBits(int n) {
+          int[] ans = new int[n + 1];
+          for (int i = 1; i <= n; i++) {
+              ans[i] = ans[i >> 1] + (i & 1);
+          }
+          return ans;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$ auxiliary.
+  </details>
+
+---
+
+### Day 4: 32-Bit Register Mirroring (Reverse Bits)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How do you transfer the lowest bit of $N$ into the highest empty position of a result register?</b></summary>
+  <br>
+  <b>Answer:</b> Shift the result register left by 1, bitwise OR with <code>(n &amp; 1)</code>, and shift $n$ right by 1.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 4**:
+  - [Reverse Bits](https://leetcode.com/problems/reverse-bits/) (NeetCode - Easy)
+  - Thinking prompts: Exactly 32 iterations reversing all bits of a 32-bit unsigned integer.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public uint reverseBits(uint n) {
+          uint res = 0;
+          for (int i = 0; i < 32; i++) {
+              res = (res << 1) | (n & 1);
+              n >>= 1;
+          }
+          return res;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(1)$ (exactly 32 iterations), Space: $O(1)$.
+  </details>
+
+---
+
+### Day 5: Gauss Summation vs XOR Offset (Missing Number)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In an array of size $N$ containing distinct numbers from $[0 \dots N]$, what two mathematical methods find the missing value in $O(N)$ time and $O(1)$ space?</b></summary>
+  <br>
+  <b>Answer:</b> 1. Arithmetic sum: $\frac{N(N+1)}{2} - \sum nums$; 2. XOR cancellation: XOR all numbers from $0$ to $N$ with all elements in $nums$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 5**:
+  - [Missing Number](https://leetcode.com/problems/missing-number/) (NeetCode - Easy)
+  - Thinking prompts: XOR eliminates potential integer overflow that can occur with Gauss summation on huge arrays.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int MissingNumber(int[] nums) {
+          int xor = nums.Length;
+          for (int i = 0; i < nums.Length; i++) {
+              xor ^= i ^ nums[i];
+          }
+          return xor;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 6: Half-Adder Logic Gates (Sum of Two Integers)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In digital circuit design, what logical gate represents bitwise addition without carry, and what gate represents carry?</b></summary>
+  <br>
+  <b>Answer:</b> XOR (<code>a ^ b</code>) produces the sum without carry. AND shifted left by 1 (<code>(a &amp; b) &lt;&lt; 1</code>) produces the carry.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 6**:
+  - [Sum of Two Integers](https://leetcode.com/problems/sum-of-two-integers/) (NeetCode - Medium)
+  - Thinking prompts: Add two integers without `+` or `-`. Loop until `carry == 0`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int GetSum(int a, int b) {
+          while (b != 0) {
+              int carry = (a & b) << 1;
+              a = a ^ b;
+              b = carry;
+          }
+          return a;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(1)$ (at most 32 carry propagations), Space: $O(1)$.
+  </details>
+
+---
+
+### Day 7: 32-Bit Arithmetic Overflow Bounds (Reverse Integer)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Before multiplying <code>res * 10 + digit</code>, how do you verify it will not exceed <code>int.MaxValue</code> ($2,147,483,647$)?</b></summary>
+  <br>
+  <b>Answer:</b> Check if <code>res &gt; int.MaxValue / 10 || (res == int.MaxValue / 10 &amp;&amp; digit &gt; 7)</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 7**:
+  - [Reverse Integer](https://leetcode.com/problems/reverse-integer/) (NeetCode - Medium)
+  - Thinking prompts: Return 0 on 32-bit signed integer overflow.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int Reverse(int x) {
+          int res = 0;
+          while (x != 0) {
+              int pop = x % 10;
+              x /= 10;
+              
+              if (res > int.MaxValue / 10 || (res == int.MaxValue / 10 && pop > 7)) return 0;
+              if (res < int.MinValue / 10 || (res == int.MinValue / 10 && pop < -8)) return 0;
+              
+              res = res * 10 + pop;
+          }
+          return res;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(\log_{10} X)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 8: Binary Exponentiation (Pow(x, n))
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How does Binary Exponentiation calculate $x^N$ in $O(\log N)$ steps instead of $O(N)$?</b></summary>
+  <br>
+  <b>Answer:</b> If $N$ is even, $x^N = (x^2)^{N/2}$. If $N$ is odd, $x^N = x \cdot (x^2)^{(N-1)/2}$. Each step squares the base and halves the exponent.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 8**:
+  - [Pow(x, n)](https://leetcode.com/problems/powx-n/) (NeetCode - Medium)
+  - Thinking prompts: Edge case: $n = \text{int.MinValue}$ (negating it overflows signed 32-bit int!). Cast $n$ to `long`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public double MyPow(double x, int n) {
+          long N = n;
+          if (N < 0) {
+              x = 1.0 / x;
+              N = -N;
+          }
+          
+          double res = 1.0;
+          double currentProduct = x;
+          
+          for (long i = N; i > 0; i /= 2) {
+              if (i % 2 == 1) {
+                  res *= currentProduct;
+              }
+              currentProduct *= currentProduct;
+          }
+          return res;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(\log N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 9: Elementary Grade-School Multiplication (Multiply Strings)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: When multiplying digits at indices $i$ and $j$, where do the product digits land in the output array?</b></summary>
+  <br>
+  <b>Answer:</b> The multiplication $num_1[i] \times num_2[j]$ spans indices $i + j$ and $i + j + 1$ in the result array of length $M + N$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 9**:
+  - [Multiply Strings](https://leetcode.com/problems/multiply-strings/) (NeetCode - Medium)
+  - Thinking prompts: Avoid `BigInteger`. Implement manual digit multiplication on `int[m + n]`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public string Multiply(string num1, string num2) {
+          if (num1 == "0" || num2 == "0") return "0";
+          
+          int m = num1.Length, n = num2.Length;
+          int[] res = new int[m + n];
+          
+          for (int i = m - 1; i >= 0; i--) {
+              for (int j = n - 1; j >= 0; j--) {
+                  int mul = (num1[i] - '0') * (num2[j] - '0');
+                  int p1 = i + j, p2 = i + j + 1;
+                  int sum = mul + res[p2];
+                  
+                  res[p2] = sum % 10;
+                  res[p1] += sum / 10;
+              }
+          }
+          
+          var sb = new System.Text.StringBuilder();
+          foreach (int digit in res) {
+              if (sb.Length == 0 && digit == 0) continue; // Skip leading zeros
+              sb.Append(digit);
+          }
+          return sb.ToString();
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(M \cdot N)$, Space: $O(M + N)$.
+  </details>
+
+---
+
+### Day 10: Sieve of Eratosthenes (Count Primes)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In the Sieve of Eratosthenes, at what multiple can we begin crossing off composites for prime $P$?</b></summary>
+  <br>
+  <b>Answer:</b> At $P^2$ (all smaller multiples like $2P, 3P$ have already been marked by smaller prime factors $2, 3$).
+  </details>
+- **Deep Practice (75–85 mins) | Problem 10**:
+  - [Count Primes](https://leetcode.com/problems/count-primes/) (LeetCode 204 - Medium)
+  - Thinking prompts: Sieve up to $N$. Outer loop condition: `p * p < n`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int CountPrimes(int n) {
+          if (n <= 2) return 0;
+          
+          bool[] isComposite = new bool[n];
+          int count = 0;
+          
+          for (int p = 2; p < n; p++) {
+              if (!isComposite[p]) {
+                  count++;
+                  if ((long)p * p < n) {
+                      for (int mult = p * p; mult < n; mult += p) {
+                          isComposite[mult] = true;
+                      }
+                  }
+              }
+          }
+          return count;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \log \log N)$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 11: CSES & Competitive Benchmarks + Spaced Retrieval
+- **Benchmark 1**: [CSES: Bit Strings](https://cses.fi/problemset/task/1617) (Calculate $2^N \pmod{10^9+7}$)
+- **Benchmark 2**: [CSES: Exponentiation](https://cses.fi/problemset/task/1095) (Fast modular exponentiation $A^B \pmod{10^9+7}$)
+- **Benchmark 3**: [CSES: Counting Divisors](https://cses.fi/problemset/task/1713) (Precomputed sieve of divisor counts)
+- **Benchmark 4**: [CSES: Common Divisors](https://cses.fi/problemset/task/1081) (Maximum GCD of pairs in an array)
+- **Benchmark 5**: [Codeforces 1097B - Petr and a Combination Lock](https://codeforces.com/problemset/problem/1097/B) (Bitmask subset rotation sum modulo 360)
+
+---
+
+### Spaced Retrieval Flashcards
+
+<details>
+<summary><b>Flashcard 1: Why is $n \ \& \ (-n)$ guaranteed to isolate the lowest set bit?</b></summary>
+<br>
+In Two's Complement representation, $-n = \sim n + 1$. Inverting $n$ flips all bits, and adding 1 turns all trailing 1s to 0 and flips the lowest set bit back to 1. Performing bitwise AND with the original number masks out all other bits except that solitary lowest bit.
+</details>
+
+<details>
+<summary><b>Flashcard 2: How do you iterate through all $2^N$ subsets of an array using an integer bitmask in C#?</b></summary>
+<br>
+Run an outer loop <code>for (int mask = 0; mask &lt; (1 &lt;&lt; n); mask++)</code> and an inner loop <code>for (int i = 0; i &lt; n; i++)</code> testing <code>if ((mask &amp; (1 &lt;&lt; i)) != 0)</code>.
+</details>
+
+<details>
+<summary><b>Flashcard 3: How does Modular Exponentiation avoid 64-bit arithmetic overflow during multiplication?</b></summary>
+<br>
+By reducing modulo $M$ at every single intermediate multiplication step: <code>res = (res * baseVal) % M</code>. Cast factors to <code>long</code> before multiplying: <code>(long)a * b % m</code>.
+</details>
+
+---
+
+## 🎯 Topic Checklist (15 Problems)
+
+| Day | # | Problem | Platform | Difficulty | Status |
+|:---:|:---:|:---|:---:|:---:|:---:|
+| Day 1 | 1 | [Single Number](https://leetcode.com/problems/single-number/) | NeetCode | Easy | - [ ] |
+| Day 2 | 2 | [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/) | NeetCode | Easy | - [ ] |
+| Day 3 | 3 | [Counting Bits](https://leetcode.com/problems/counting-bits/) | NeetCode | Easy | - [ ] |
+| Day 4 | 4 | [Reverse Bits](https://leetcode.com/problems/reverse-bits/) | NeetCode | Easy | - [ ] |
+| Day 5 | 5 | [Missing Number](https://leetcode.com/problems/missing-number/) | NeetCode | Easy | - [ ] |
+| Day 6 | 6 | [Sum of Two Integers](https://leetcode.com/problems/sum-of-two-integers/) | NeetCode | Medium | - [ ] |
+| Day 7 | 7 | [Reverse Integer](https://leetcode.com/problems/reverse-integer/) | NeetCode | Medium | - [ ] |
+| Day 8 | 8 | [Pow(x, n)](https://leetcode.com/problems/powx-n/) | NeetCode | Medium | - [ ] |
+| Day 9 | 9 | [Multiply Strings](https://leetcode.com/problems/multiply-strings/) | NeetCode | Medium | - [ ] |
+| Day 10 | 10 | [Count Primes](https://leetcode.com/problems/count-primes/) | LeetCode | Medium | - [ ] |
+| Day 11 | 11 | [Bit Strings](https://cses.fi/problemset/task/1617) | CSES | Easy | - [ ] |
+| Day 11 | 12 | [Exponentiation](https://cses.fi/problemset/task/1095) | CSES | Easy | - [ ] |
+| Day 11 | 13 | [Counting Divisors](https://cses.fi/problemset/task/1713) | CSES | Easy | - [ ] |
+| Day 11 | 14 | [Common Divisors](https://cses.fi/problemset/task/1081) | CSES | Hard | - [ ] |
+| Day 11 | 15 | [Petr and a Combination Lock (1097B)](https://codeforces.com/problemset/problem/1097/B) | Codeforces | Rating 1000 | - [ ] |
+
+---
+
+[⬅️ Previous Topic: Greedy Algorithms & Intervals](14-greedy-intervals.md) | [Home](index.md) | **🎉 Course Completed!**
+

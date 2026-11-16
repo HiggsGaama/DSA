@@ -1,218 +1,487 @@
 ---
-layout: default
-title: "Topic 02: Two Pointers"
+layout: page
+title: "Two Pointers"
+permalink: /two-pointers/
 ---
 
-# Topic 02: Two Pointers
+# Two Pointers
 
-[← Topic 01: Arrays & Hashing](01-arrays-and-hashing.md) \| [Schedule](schedule.md) \| [Next: Sliding Window →](03-sliding-window.md)
-
----
-
-## Daily Timeboxing (1.5 – 2.0 Hours)
-- **00:00 – 00:15 (15m) | Active Recall Pre-Test**: Answer the conceptual questions below before reading further.
-- **00:15 – 00:40 (25m) | YouTube Conceptual Anchor**: Watch the curated video segment on sorted search space monotonicity.
-- **00:40 – 01:30 (50m) | Coding Deep Dive**: Pen-and-paper dry run of Container With Most Water & Trapping Rain Water.
-- **01:30 – 01:45 (15m) | Post-Session Flashcards**: Complete the flashcard prompts from memory.
+> **Estimated Time**: 11 Days • **Pace**: 1.5–2 hours/day (Strictly 1 problem/day) • **Language**: C# (.NET 6+)
 
 ---
 
-## 1. Active Recall Pre-Test (15 Minutes)
-Attempt to answer these questions on paper before expanding the solutions.
+## 🛠️ C# Mental Model & Gotchas
+
+### 1. Pointer Mechanics on Arrays & Spans
+In C#, two-pointer algorithms typically involve two integer indices (`int left = 0, right = n - 1`). 
+- **Array Bounds Checking**: C# performs automatic JIT array bounds checking on index accesses `arr[left]`. When doing pointer arithmetic, ensure `left <= right` or `left < right` loop invariants strictly guard against `IndexOutOfRangeException`.
+- **String Inspection Without Garbage**: For string parsing (e.g. palindrome checks), avoid calling `.Replace()`, `.ToLower()`, or `.ToCharArray()`, which allocate new strings on the heap. Instead, use static utility methods directly: `char.IsLetterOrDigit(s[left])` and `char.ToLowerInvariant(s[left])`.
+- **In-Place Mutation**: In C#, arrays are reference types passed by value. Mutating `nums[left]` directly updates the caller's array in-place without returning a new array.
+
+### 2. Core Invariants of Two Pointers
+- **Opposite-Direction (Inward Squeeze)**: Used when the array is sorted or bounded by extremes. At each step, comparing elements at `left` and `right` allows you to irrevocably discard one side because monotonic order guarantees no better solution exists on that side.
+- **Same-Direction (Fast / Slow Runner)**: Used for in-place compaction, partition, or cycle detection. The slow pointer maintains the boundary of processed valid elements, while the fast pointer explores unseen candidates.
+
+---
+
+## 📅 Day-by-Day Schedule
+
+### Day 1: Theory Anchor & Baseline Pattern
+- **Step 1 (45 mins) | Concept Video**: [Two Pointer Technique Explained](https://www.youtube.com/watch?v=-gjxg6Pln50) by *NeetCode*
+  - Key focus: What mathematical property of a sorted array guarantees that moving the left pointer strictly increases the sum and moving the right pointer strictly decreases it?
+- **Step 2 (20 mins) | Pen & Paper Invariant**:
+  - Write down the string `"A man, a plan, a canal: Panama"`. Walk two pointers inward, manually skipping non-alphanumeric characters. Note the pointer boundary condition when they meet.
+- **Step 3 (45 mins) | Problem 1 (Warm-Up)**:
+  - [Valid Palindrome](https://leetcode.com/problems/valid-palindrome/) (NeetCode - Easy)
+  - Objective: Implement in C# with $O(1)$ extra space using `char.IsLetterOrDigit` and `char.ToLowerInvariant`.
+- **Step 4 (10 mins) | Active Recall**:
+  <details>
+  <summary><b>🧠 Self-Test: Why should you avoid <code>s.ToLower()</code> and regex replace when checking for palindromes?</b></summary>
+  <br>
+  <b>Answer:</b> <code>s.ToLower()</code> and <code>Regex.Replace()</code> allocate brand new strings of size $O(N)$ on the managed heap, triggering unnecessary GC allocations. Inspecting characters in-place using two integer pointers runs in $O(N)$ time with $O(1)$ auxiliary memory.
+  </details>
+
+---
+
+### Day 2: Inward Squeeze on Sorted Space
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Two Sum II (1-indexed sorted array), if <code>nums[left] + nums[right] &gt; target</code>, which pointer MUST move, and why?</b></summary>
+  <br>
+  <b>Answer:</b> Decrement <code>right</code>. Since the array is sorted in ascending order, any pair involving <code>right</code> with an index greater than or equal to <code>left</code> will also exceed <code>target</code>. Decrementing <code>right</code> is the only move that can decrease the sum.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 2**:
+  - [Two Sum II - Input Array Is Sorted](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/) (NeetCode - Medium)
+  - Thinking prompts: Identify the monotonic property. Show why $O(N)$ two-pointer traversal eliminates the need for an $O(N)$ auxiliary hash map.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[] TwoSum(int[] numbers, int target) {
+          int left = 0;
+          int right = numbers.Length - 1;
+          
+          while (left < right) {
+              int currentSum = numbers[left] + numbers[right];
+              if (currentSum == target) {
+                  return new int[] { left + 1, right + 1 }; // 1-indexed
+              } else if (currentSum < target) {
+                  left++;
+              } else {
+                  right--;
+              }
+          }
+          return Array.Empty<int>();
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 3: Deduplication & 3-Pointer Anchoring
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How do you prevent duplicate triplets in 3Sum without using a <code>HashSet</code> of tuples?</b></summary>
+  <br>
+  <b>Answer:</b> Sort the array first. When fixing the outer element $i$, skip if <code>i &gt; 0 &amp;&amp; nums[i] == nums[i - 1]</code>. When moving the two inner pointers after finding a triplet, skip duplicate adjacent values: <code>while (left &lt; right &amp;&amp; nums[left] == nums[left + 1]) left++;</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 3**:
+  - [3Sum](https://leetcode.com/problems/3sum/) (NeetCode - Medium)
+  - Thinking prompts: Sort the array ($O(N \log N)$). Anchor index $i$, then execute Two Sum II inward squeeze on the remaining range $[i + 1, N - 1]$.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public IList<IList<int>> ThreeSum(int[] nums) {
+          Array.Sort(nums);
+          List<IList<int>> result = new();
+          int n = nums.Length;
+          
+          for (int i = 0; i < n - 2; i++) {
+              if (nums[i] > 0) break; // Cannot sum to 0 if smallest number > 0
+              if (i > 0 && nums[i] == nums[i - 1]) continue; // Skip duplicate outer
+              
+              int left = i + 1;
+              int right = n - 1;
+              
+              while (left < right) {
+                  int sum = nums[i] + nums[left] + nums[right];
+                  if (sum == 0) {
+                      result.Add(new List<int> { nums[i], nums[left], nums[right] });
+                      while (left < right && nums[left] == nums[left + 1]) left++;
+                      while (left < right && nums[right] == nums[right - 1]) right--;
+                      left++;
+                      right--;
+                  } else if (sum < 0) {
+                      left++;
+                  } else {
+                      right--;
+                  }
+              }
+          }
+          return result;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N^2)$, Space: $O(1)$ auxiliary (or $O(\log N)$ for sorting stack).
+  </details>
+
+---
+
+### Day 4: Greedy Capacity Bounds (Container With Most Water)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Container With Most Water, why do we always advance the pointer pointing to the shorter vertical bar?</b></summary>
+  <br>
+  <b>Answer:</b> The water area is bounded by $\min(h[L], h[R]) \times (R - L)$. Moving the taller bar only shrinks the width while being strictly capped by the shorter bar. Thus, advancing the shorter bar is the only choice that could potentially yield a larger area.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 4**:
+  - [Container With Most Water](https://leetcode.com/problems/container-with-most-water/) (NeetCode - Medium)
+  - Thinking prompts: Prove that no optimal solution is missed by discarding the shorter wall at each iteration.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int MaxArea(int[] height) {
+          int left = 0;
+          int right = height.Length - 1;
+          int maxWater = 0;
+          
+          while (left < right) {
+              int hLeft = height[left];
+              int hRight = height[right];
+              int currentWater = Math.Min(hLeft, hRight) * (right - left);
+              if (currentWater > maxWater) {
+                  maxWater = currentWater;
+              }
+              
+              if (hLeft < hRight) {
+                  left++;
+              } else {
+                  right--;
+              }
+          }
+          return maxWater;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 5: Two-Pointer Prefix/Suffix Extrema (Trapping Rain Water)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: What is the formula for trapped water at index $i$?</b></summary>
+  <br>
+  <b>Answer:</b> $\max(0, \min(\text{max\_left}[i], \text{max\_right}[i]) - \text{height}[i])$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 5**:
+  - [Trapping Rain Water](https://leetcode.com/problems/trapping-rain-water/) (NeetCode - Hard)
+  - Thinking prompts: Instead of allocating two $O(N)$ arrays for prefix and suffix maximums, maintain `leftMax` and `rightMax` variables. Move whichever pointer has the smaller current max boundary.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int Trap(int[] height) {
+          if (height.Length == 0) return 0;
+          
+          int left = 0, right = height.Length - 1;
+          int leftMax = 0, rightMax = 0;
+          int totalWater = 0;
+          
+          while (left < right) {
+              if (height[left] <= height[right]) {
+                  if (height[left] >= leftMax) {
+                      leftMax = height[left];
+                  } else {
+                      totalWater += leftMax - height[left];
+                  }
+                  left++;
+              } else {
+                  if (height[right] >= rightMax) {
+                      rightMax = height[right];
+                  } else {
+                      totalWater += rightMax - height[right];
+                  }
+                  right--;
+              }
+          }
+          return totalWater;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$ auxiliary.
+  </details>
+
+---
+
+### Day 6: Dutch National Flag 3-Way Partitioning
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In the Dutch National Flag algorithm, what do the three pointers <code>low</code>, <code>mid</code>, and <code>high</code> represent?</b></summary>
+  <br>
+  <b>Answer:</b> Invariants: elements in $[0 \dots low - 1]$ are 0; elements in $[low \dots mid - 1]$ are 1; elements in $[mid \dots high]$ are unknown; elements in $[high + 1 \dots n - 1]$ are 2.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 6**:
+  - [Sort Colors](https://leetcode.com/problems/sort-colors/) (NeetCode - Medium)
+  - Thinking prompts: Why do we increment `mid` when swapping with `low`, but NOT when swapping with `high`? (Because the element coming from `high` is unexamined!).
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public void SortColors(int[] nums) {
+          int low = 0, mid = 0, high = nums.Length - 1;
+          
+          while (mid <= high) {
+              if (nums[mid] == 0) {
+                  (nums[low], nums[mid]) = (nums[mid], nums[low]);
+                  low++;
+                  mid++;
+              } else if (nums[mid] == 1) {
+                  mid++;
+              } else { // nums[mid] == 2
+                  (nums[mid], nums[high]) = (nums[high], nums[mid]);
+                  high--;
+                  // Do not increment mid here: swapped element from high must be inspected
+              }
+          }
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$ single pass, Space: $O(1)$ in-place swaps.
+  </details>
+
+---
+
+### Day 7: Fast & Slow In-Place Array Compaction
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In fast & slow pointer compaction, what is the invariant of the slow pointer?</b></summary>
+  <br>
+  <b>Answer:</b> <code>slow</code> points to the index where the next valid, non-duplicate element should be written. All elements in $[0 \dots slow - 1]$ satisfy the required uniqueness/ordering invariant.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 7**:
+  - [Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/) (NeetCode - Easy)
+  - Thinking prompts: Maintain `slow = 1`. Iterate `fast` from 1 to $N - 1$. If `nums[fast] != nums[fast - 1]`, write `nums[slow] = nums[fast]` and increment `slow`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int RemoveDuplicates(int[] nums) {
+          if (nums.Length == 0) return 0;
+          
+          int slow = 1;
+          for (int fast = 1; fast < nums.Length; fast++) {
+              if (nums[fast] != nums[fast - 1]) {
+                  nums[slow] = nums[fast];
+                  slow++;
+              }
+          }
+          return slow;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 8: Stable Compaction & Zero Relocation
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How can Move Zeroes maintain relative ordering without extra space?</b></summary>
+  <br>
+  <b>Answer:</b> Maintain <code>slow = 0</code>. Whenever <code>nums[fast] != 0</code>, swap <code>nums[slow]</code> and <code>nums[fast]</code>, then increment <code>slow</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 8**:
+  - [Move Zeroes](https://leetcode.com/problems/move-zeroes/) (NeetCode - Easy)
+  - Thinking prompts: Compare two-pass (overwrite with non-zeros then fill rest with zeros) versus single-pass swap.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public void MoveZeroes(int[] nums) {
+          int slow = 0;
+          for (int fast = 0; fast < nums.Length; fast++) {
+              if (nums[fast] != 0) {
+                  if (slow != fast) {
+                      (nums[slow], nums[fast]) = (nums[fast], nums[slow]);
+                  }
+                  slow++;
+              }
+          }
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 9: Multi-Pointer Recursive Generalization (4Sum)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: What arithmetic overflow must you safeguard against when summing 4 integers in C#?</b></summary>
+  <br>
+  <b>Answer:</b> Adding four 32-bit signed integers can exceed <code>int.MaxValue</code> ($2 \times 10^9$). Cast intermediate sums to <code>long</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 9**:
+  - [4Sum](https://leetcode.com/problems/4sum/) (NeetCode - Medium)
+  - Thinking prompts: Generalize 3Sum by nesting two outer loops $(i, j)$ and reducing the inner search to Two Sum II. Ensure duplicates are skipped at both outer loop levels.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public IList<IList<int>> FourSum(int[] nums, int target) {
+          Array.Sort(nums);
+          List<IList<int>> result = new();
+          int n = nums.Length;
+          
+          for (int i = 0; i < n - 3; i++) {
+              if (i > 0 && nums[i] == nums[i - 1]) continue;
+              
+              for (int j = i + 1; j < n - 2; j++) {
+                  if (j > i + 1 && nums[j] == nums[j - 1]) continue;
+                  
+                  int left = j + 1;
+                  int right = n - 1;
+                  long reqTarget = (long)target - nums[i] - nums[j];
+                  
+                  while (left < right) {
+                      long sum = (long)nums[left] + nums[right];
+                      if (sum == reqTarget) {
+                          result.Add(new List<int> { nums[i], nums[j], nums[left], nums[right] });
+                          while (left < right && nums[left] == nums[left + 1]) left++;
+                          while (left < right && nums[right] == nums[right - 1]) right--;
+                          left++;
+                          right--;
+                      } else if (sum < reqTarget) {
+                          left++;
+                      } else {
+                          right--;
+                      }
+                  }
+              }
+          }
+          return result;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N^3)$, Space: $O(1)$ auxiliary.
+  </details>
+
+---
+
+### Day 10: Greedy Pairing with Two Pointers
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Boats to Save People (capacity $\le 2$ people, weight $\le limit$), why pair the heaviest person with the lightest person?</b></summary>
+  <br>
+  <b>Answer:</b> The heaviest person is the hardest to accommodate. If even the lightest person cannot share a boat with them, no one can, so the heaviest person must ride alone.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 10**:
+  - [Boats to Save People](https://leetcode.com/problems/boats-to-save-people/) (LeetCode 881 - Medium)
+  - Thinking prompts: Sort array. If `people[left] + people[right] <= limit`, both board (`left++`, `right--`). Otherwise, only the heavy person boards (`right--`).
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int NumRescueBoats(int[] people, int limit) {
+          Array.Sort(people);
+          int left = 0;
+          int right = people.Length - 1;
+          int boats = 0;
+          
+          while (left <= right) {
+              if (people[left] + people[right] <= limit) {
+                  left++;
+              }
+              right--;
+              boats++;
+          }
+          return boats;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \log N)$ due to sorting, Space: $O(1)$.
+  </details>
+
+---
+
+### Day 11: CSES & Competitive Benchmarks + Spaced Retrieval
+- **Benchmark 1**: [CSES: Sum of Two Values](https://cses.fi/problemset/task/1640) (Coordinate compression / sorting + two pointers)
+- **Benchmark 2**: [CSES: Sum of Three Values](https://cses.fi/problemset/task/1641) (3Sum on $1$-based indices)
+- **Benchmark 3**: [CSES: Nearest Smaller Values](https://cses.fi/problemset/task/1645) (Two pointer vs monotonic preview)
+- **Benchmark 4**: [Codeforces 279B - Books](https://codeforces.com/problemset/problem/279/B) (Two pointers with prefix sum limit)
+- **Benchmark 5**: [Codeforces 1619C - Wrong Addition](https://codeforces.com/problemset/problem/1619/C) (Right-to-left two pointer digit matching)
+
+---
+
+### Spaced Retrieval Flashcards
 
 <details>
-<summary><strong>Prompt 1: What mathematical property of a sorted array enables the two-pointer technique to solve Two Sum in $O(N)$ time and $O(1)$ space?</strong></summary>
-
-Monotonicity. In a sorted array, moving the `left` pointer to the right (`left += 1`) strictly non-decreases the sum ($A[\text{left}] + A[\text{right}]$), while moving the `right` pointer to the left (`right -= 1`) strictly non-increases the sum. 
-Because the directional response to every comparison ($< \text{target}$ or $> \text{target}$) is monotonic and unambiguous, we eliminate an entire row or column of candidate pairs at each step without ever needing to evaluate them.
+<summary><b>Flashcard 1: When does the Two Pointer inward squeeze fail on an array?</b></summary>
+<br>
+When the array is unsorted and lacks a monotonic trade-off property (e.g. elements can be arbitrary positive/negative values). Without monotonicity, moving one pointer cannot guarantee the elimination of all pairs on that side.
 </details>
 
 <details>
-<summary><strong>Prompt 2: In Container With Most Water, why is it always optimal to move the pointer pointing to the shorter line?</strong></summary>
-
-The volume (area) between two boundaries at indices $L$ and $R$ is given by:
-$$\text{Area} = (R - L) \times \min(H[L], H[R])$$
-As we move inward, the width $(R - L)$ strictly decreases by 1. 
-If we were to move the pointer pointing to the *taller* line, the height of the new container would remain bottlenecked by the shorter line ($\min(\text{shorter}, H_{\text{new}}) \le \text{shorter}$). Thus, the area can only stay the same or decrease. 
-The *only* mathematical possibility of obtaining a larger area is to move the pointer pointing to the shorter line in the hope of finding a significantly taller boundary that compensates for the decreased width.
+<summary><b>Flashcard 2: In Dutch National Flag 3-way partitioning, why is <code>mid</code> NOT incremented after swapping with <code>high</code>?</b></summary>
+<br>
+The element swapped from index <code>high</code> came from an unexamined region. It could be a 0, 1, or 2, and therefore must be processed at index <code>mid</code> during the next loop iteration.
 </details>
 
 <details>
-<summary><strong>Prompt 3: How does the two-pointer approach for Trapping Rain Water eliminate the $O(N)$ auxiliary space required by prefix/suffix max arrays?</strong></summary>
-
-The water trapped at index $i$ depends on $\min(\text{max\_left}[i], \text{max\_right}[i]) - H[i]$.
-Using two pointers $L$ and $R$ starting at opposite ends:
-- If `max_left < max_right`, we know with certainty that the water trapped at $L$ is bounded by `max_left`, regardless of whatever higher peaks might exist between $L$ and $R$. Thus, we can immediately calculate trapped water at $L$ and increment $L$.
-- Conversely, if `max_right <= max_left`, water at $R$ is strictly bounded by `max_right`, so we calculate water at $R$ and decrement $R$.
+<summary><b>Flashcard 3: How do you swap two variables in C# without a temporary variable?</b></summary>
+<br>
+Using C# ValueTuple deconstruction: <code>(nums[i], nums[j]) = (nums[j], nums[i]);</code>. The C# compiler emits efficient IL that loads both values onto the evaluation stack and stores them without allocating heap objects.
 </details>
 
 ---
 
-## 2. YouTube Conceptual Anchor (25 Minutes)
+## 🎯 Topic Checklist (15 Problems)
 
-Recommended Video Anchors:
-1. **NeetCode**: [Two Pointers / 3Sum Intuition & Trapping Rain Water](https://www.youtube.com/watch?v=jzZsG8n2R9A) (15 mins)
-2. **Striver**: [Two Pointer & Greedy Paradigm Overview](https://www.youtube.com/watch?v=1pkOGXXUtxk) (16 mins)
-
-### Core Invariants & Mental Model
-1. **Opposing Pointers Invariant ($L \to \dots \leftarrow R$)**: Used when a global metric changes monotonically as boundaries contract from the extremities.
-2. **Parallel / Fast-Slow Invariant ($S \to F \to$)**: Used for in-place array compaction (e.g., removing duplicates) or cycle detection. The slow pointer $S$ demarcates the boundary of already-processed valid elements, while $F$ explores unprocessed values.
-3. **Fixed Pivot Reduction ($O(N^2)$ for 3Sum)**: Fix the first element at index $i$ with a single loop. Then use two opposing pointers on the remaining subarray $i+1 \dots N-1$ to find the two-element complement $-(A[i])$. Always skip duplicate values for both $i$, $L$, and $R$ to maintain distinct triplets.
-
----
-
-## 3. Canonical Code Templates
-
-### Pattern A: Opposing Two Pointers (Two Sum II — $O(N)$ Time, $O(1)$ Space)
-```python
-from typing import List
-
-def two_sum_sorted(numbers: List[int], target: int) -> List[int]:
-    left = 0
-    right = len(numbers) - 1
-    
-    while left < right:
-        current_sum = numbers[left] + numbers[right]
-        if current_sum == target:
-            return [left + 1, right + 1]  # 1-indexed return
-        elif current_sum < target:
-            left += 1
-        else:
-            right -= 1
-            
-    return []
-```
-
-### Pattern B: Fast-Slow In-Place Compaction ($O(N)$ Time, $O(1)$ Space)
-```python
-from typing import List
-
-def remove_duplicates(nums: List[int]) -> int:
-    if not nums:
-        return 0
-        
-    slow = 0  # Invariant: nums[0...slow] contains unique elements in sorted order
-    
-    for fast in range(1, len(nums)):
-        if nums[fast] != nums[slow]:
-            slow += 1
-            nums[slow] = nums[fast]
-            
-    return slow + 1
-```
-
-### Pattern C: Trapping Rain Water Two-Pointer Invariant ($O(N)$ Time, $O(1)$ Space)
-```python
-from typing import List
-
-def trap_rain_water(height: List[int]) -> int:
-    if not height:
-        return 0
-        
-    left, right = 0, len(height) - 1
-    max_left, max_right = height[left], height[right]
-    trapped_water = 0
-    
-    while left < right:
-        if max_left < max_right:
-            left += 1
-            max_left = max(max_left, height[left])
-            trapped_water += max_left - height[left]
-        else:
-            right -= 1
-            max_right = max(max_right, height[right])
-            trapped_water += max_right - height[right]
-            
-    return trapped_water
-```
+| Day | # | Problem | Platform | Difficulty | Status |
+|:---:|:---:|:---|:---:|:---:|:---:|
+| Day 1 | 1 | [Valid Palindrome](https://leetcode.com/problems/valid-palindrome/) | NeetCode | Easy | - [ ] |
+| Day 2 | 2 | [Two Sum II - Input Array Is Sorted](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/) | NeetCode | Medium | - [ ] |
+| Day 3 | 3 | [3Sum](https://leetcode.com/problems/3sum/) | NeetCode | Medium | - [ ] |
+| Day 4 | 4 | [Container With Most Water](https://leetcode.com/problems/container-with-most-water/) | NeetCode | Medium | - [ ] |
+| Day 5 | 5 | [Trapping Rain Water](https://leetcode.com/problems/trapping-rain-water/) | NeetCode | Hard | - [ ] |
+| Day 6 | 6 | [Sort Colors](https://leetcode.com/problems/sort-colors/) | NeetCode | Medium | - [ ] |
+| Day 7 | 7 | [Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/) | NeetCode | Easy | - [ ] |
+| Day 8 | 8 | [Move Zeroes](https://leetcode.com/problems/move-zeroes/) | NeetCode | Easy | - [ ] |
+| Day 9 | 9 | [4Sum](https://leetcode.com/problems/4sum/) | NeetCode | Medium | - [ ] |
+| Day 10 | 10 | [Boats to Save People](https://leetcode.com/problems/boats-to-save-people/) | LeetCode | Medium | - [ ] |
+| Day 11 | 11 | [Sum of Two Values](https://cses.fi/problemset/task/1640) | CSES | Easy | - [ ] |
+| Day 11 | 12 | [Sum of Three Values](https://cses.fi/problemset/task/1641) | CSES | Medium | - [ ] |
+| Day 11 | 13 | [Nearest Smaller Values](https://cses.fi/problemset/task/1645) | CSES | Medium | - [ ] |
+| Day 11 | 14 | [Books (279B)](https://codeforces.com/problemset/problem/279/B) | Codeforces | Rating 1100 | - [ ] |
+| Day 11 | 15 | [Wrong Addition (1619C)](https://codeforces.com/problemset/problem/1619/C) | Codeforces | Rating 1200 | - [ ] |
 
 ---
 
-## 4. Coding Deep Dive: Worked Walkthrough (50 Minutes)
+[⬅️ Previous Topic: Arrays & Hashing](01-arrays-and-hashing.md) | [Home](index.md) | [Next Topic: Sliding Window ➡️](03-sliding-window.md)
 
-### Problem: 3Sum (LeetCode 15)
-**Problem Statement**: Given an integer array `nums`, return all unique triplets `[nums[i], nums[j], nums[k]]` such that `i != j != k` and `nums[i] + nums[j] + nums[k] == 0`. The solution set must not contain duplicate triplets.
-
-#### Pen-and-Paper Dry Run Trace
-Let `nums = [-1, 0, 1, 2, -1, -4]`.
-1. Sort array: `nums = [-4, -1, -1, 0, 1, 2]`. Length $N = 6$.
-2. Outer loop `i` from 0 to $N-3$:
-
-| Step | `i` | `nums[i]` | `left` | `right` | `nums[left] + nums[right]` | Target (`-nums[i]`) | Action Taken | Triplets Recorded |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|:---|
-| 1 | 0 | -4 | 1 (-1) | 5 (2) | 1 | 4 | $1 < 4 \implies \text{left}++$ | `[]` |
-| 2 | 0 | -4 | 2 (-1) | 5 (2) | 1 | 4 | $1 < 4 \implies \text{left}++$ | `[]` |
-| 3 | 0 | -4 | 4 (1) | 5 (2) | 3 | 4 | $3 < 4 \implies \text{left}++$ (stops) | `[]` |
-| 4 | 1 | -1 | 2 (-1) | 5 (2) | 1 | 1 | **Match!** Record, advance both, skip duplicates | `[[-1, -1, 2]]` |
-| 5 | 1 | -1 | 3 (0) | 4 (1) | 1 | 1 | **Match!** Record, advance both | `[[-1, -1, 2], [-1, 0, 1]]` |
-| 6 | 2 | -1 | - | - | - | - | `nums[2] == nums[1]`, **Skip duplicate pivot** | - |
-| 7 | 3 | 0 | 4 (1) | 5 (2) | 3 | 0 | $3 > 0 \implies \text{right}--$ (stops) | - |
-
-Result: `[[-1, -1, 2], [-1, 0, 1]]`.
-Time Complexity: $O(N \log N)$ sort + $O(N^2)$ two pointers = $O(N^2)$.
-Space Complexity: $O(1)$ auxiliary (or $O(N)$ depending on sorting implementation).
-
----
-
-## 5. Curated Problem Set (15 Problems)
-
-Track your daily solutions by checking off the markdown boxes.
-
-### NeetCode / LeetCode (Core)
-- [ ] [LeetCode 125: Valid Palindrome](https://leetcode.com/problems/valid-palindrome/) | Easy | Alphanumeric Filtering & Converging Pointers
-- [ ] [LeetCode 167: Two Sum II - Input Array Is Sorted](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/) | Medium | Monotonic Sum Boundary Movement
-- [ ] [LeetCode 15: 3Sum](https://leetcode.com/problems/3sum/) | Medium | Sorted Pivot Fixation & Duplicate Pruning
-- [ ] [LeetCode 11: Container With Most Water](https://leetcode.com/problems/container-with-most-water/) | Medium | Area Minimizing Height Elimination
-- [ ] [LeetCode 42: Trapping Rain Water](https://leetcode.com/problems/trapping-rain-water/) | Hard | Min-Height Boundary Invariant
-- [ ] [LeetCode 26: Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/) | Easy | Fast-Slow Pointer Overwriting
-- [ ] [LeetCode 75: Sort Colors](https://leetcode.com/problems/sort-colors/) | Medium | Dutch National Flag (3-Way Partitioning)
-- [ ] [LeetCode 16: 3Sum Closest](https://leetcode.com/problems/3sum-closest/) | Medium | Absolute Difference Tracking
-- [ ] [LeetCode 18: 4Sum](https://leetcode.com/problems/4sum/) | Medium | Generalized K-Sum Recursion / Pointers
-- [ ] [LeetCode 392: Is Subsequence](https://leetcode.com/problems/is-subsequence/) | Easy | Two Pointers Single-Pass Matching
-
-### CSES Problem Set (Free Tier, No Login Wall)
-- [ ] [CSES 1640: Sum of Two Values](https://cses.fi/problemset/task/1640) | Sorting & Searching | Two Pointers on Sorted Value-Index Pairs
-- [ ] [CSES 1084: Apartments](https://cses.fi/problemset/task/1084) | Sorting & Searching | Greedy Two-Pointer Matching with Tolerance
-- [ ] [CSES 1090: Ferris Wheel](https://cses.fi/problemset/task/1090) | Sorting & Searching | Pairing Heaviest with Lightest
-- [ ] [CSES 1641: Sum of Three Values](https://cses.fi/problemset/task/1641) | Sorting & Searching | 3Sum with 1-based Index Output
-
-### Codeforces & AtCoder (Rating 800–1400)
-- [ ] [Codeforces 381A: Sereja and Dima](https://codeforces.com/problemset/problem/381/A) | 800 | Greedy Pick from Outer Extremities
-- [ ] [Codeforces 279B: Books](https://codeforces.com/problemset/problem/279/B) | 1100 | Two Pointers / Sliding Window Sum Bound
-
----
-
-## 6. Post-Session Active Recall Flashcards (15 Minutes)
-
-<details>
-<summary><strong>Flashcard 1: In the Dutch National Flag algorithm (Sort Colors), what are the three invariants maintained by pointers `low`, `mid`, and `high`?</strong></summary>
-
-1. `nums[0 ... low - 1]` contains strictly `0`s.
-2. `nums[low ... mid - 1]` contains strictly `1`s.
-3. `nums[high + 1 ... N - 1]` contains strictly `2`s.
-The unexamined subarray is `nums[mid ... high]`.
-- If `nums[mid] == 0`: swap `nums[low]` and `nums[mid]`, then `low += 1, mid += 1`.
-- If `nums[mid] == 1`: simply advance `mid += 1`.
-- If `nums[mid] == 2`: swap `nums[mid]` and `nums[high]`, then `high -= 1` (do NOT advance `mid` because the swapped-in value has not yet been inspected).
-</details>
-
-<details>
-<summary><strong>Flashcard 2: How do you guarantee zero duplicate triplets in 3Sum without allocating a hash set?</strong></summary>
-
-1. Sort the array first.
-2. For the outer loop `i`: if `i > 0 and nums[i] == nums[i - 1]`, `continue`.
-3. Inside the two-pointer loop, after finding a match `nums[i] + nums[L] + nums[R] == 0`:
-   - Increment `L` while `L < R and nums[L] == nums[L + 1]`.
-   - Decrement `R` while `L < R and nums[R] == nums[R - 1]`.
-   - Finally, advance `L += 1` and `R -= 1`.
-</details>
-
-<details>
-<summary><strong>Flashcard 3: What is the primary indicator that a problem can be solved with two pointers rather than a hash table?</strong></summary>
-
-The problem exhibits monotonic movement over an ordered (or sortable) linear structure, and requires $O(1)$ auxiliary space. Hash tables trade $O(N)$ memory to enable arbitrary non-ordered lookups; two pointers exploit the geometric structure of sorted order to search without extra memory.
-</details>
-
----
-
-[← Topic 01: Arrays & Hashing](01-arrays-and-hashing.md) \| [Next Topic: Sliding Window →](03-sliding-window.md)

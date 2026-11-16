@@ -1,249 +1,639 @@
 ---
-layout: default
-title: "Topic 11: Graphs II - Topo Sort, Dijkstra & DSU"
+layout: page
+title: "Graphs II: Topological Sort, Dijkstra & Union-Find"
+permalink: /graphs-advanced/
 ---
 
-# Topic 11: Graphs II - Topo Sort, Dijkstra & DSU
+# Graphs II: Topological Sort, Dijkstra & Union-Find
 
-[← Topic 10: Graphs I](10-graphs-traversal.md) \| [Schedule](schedule.md) \| [Next: 1-D Dynamic Programming →](12-1d-dp.md)
-
----
-
-## Daily Timeboxing (1.5 – 2.0 Hours)
-- **00:00 – 00:15 (15m) | Active Recall Pre-Test**: Answer the conceptual questions below before reading further.
-- **00:15 – 00:40 (25m) | YouTube Conceptual Anchor**: Watch the curated video segment on Kahn's algorithm, Dijkstra relaxation, and DSU.
-- **00:40 – 01:30 (50m) | Coding Deep Dive**: Pen-and-paper dry run of Course Schedule II & Network Delay Time.
-- **01:30 – 01:45 (15m) | Post-Session Flashcards**: Complete the flashcard prompts from memory.
+> **Estimated Time**: 12 Days • **Pace**: 1.5–2 hours/day (Strictly 1 problem/day) • **Language**: C# (.NET 6+)
 
 ---
 
-## 1. Active Recall Pre-Test (15 Minutes)
-Attempt to answer these questions on paper before expanding the solutions.
+## 🛠️ C# Mental Model & Gotchas
 
-<details>
-<summary><strong>Prompt 1: Why does Dijkstra's Algorithm fail on graphs containing negative edge weights?</strong></summary>
+### 1. Disjoint Set Union (DSU) with Path Compression & Rank
+The golden standard DSU in C#:
+```csharp
+public class UnionFind {
+    private readonly int[] _parent;
+    private readonly int[] _rank;
+    public int Components { get; private set; }
 
-Dijkstra relies on a **greedy invariant**: once a vertex $u$ is popped from the min-heap with the minimum tentative distance $d[u]$, its shortest path is finalized and will never be relaxed again. 
-This invariant holds strictly when all edge weights are non-negative ($w(u, v) \ge 0$), because any alternative path to $u$ through an unvisited vertex $x$ already has length $d[x] \ge d[u]$, and adding non-negative weights cannot decrease it. 
-With negative weights, an alternative longer-hop path can yield a smaller total distance after $u$ was already finalized, violating the greedy assumption. (Negative weights require Bellman-Ford or SPFA).
-</details>
+    public UnionFind(int n) {
+        _parent = new int[n];
+        _rank = new int[n];
+        Components = n;
+        for (int i = 0; i < n; i++) _parent[i] = i;
+    }
 
-<details>
-<summary><strong>Prompt 2: How does Kahn's algorithm detect directed cycles during Topological Sort?</strong></summary>
+    public int Find(int i) {
+        if (_parent[i] == i) return i;
+        return _parent[i] = Find(_parent[i]); // Path compression
+    }
 
-Kahn's algorithm maintains an `in_degree` array and enqueues all vertices with `in_degree == 0`. 
-When a node is popped, it is appended to the topological order, and the in-degrees of all its neighbors are decremented. 
-Any nodes participating in a directed cycle will always have an in-degree $\ge 1$ from their cycle predecessor, so they can never reach an in-degree of 0. 
-If the total number of nodes in the output topological order is strictly less than $|V|$, a cycle exists.
-</details>
+    public bool Union(int i, int j) {
+        int rootI = Find(i);
+        int rootJ = Find(j);
+        if (rootI == rootJ) return false; // Already connected
 
-<details>
-<summary><strong>Prompt 3: What is the time complexity of Disjoint Set Union (DSU) when both Path Compression and Union by Rank are used?</strong></summary>
-
-$O(\alpha(N))$ amortized per operation, where $\alpha(N)$ is the **Inverse Ackermann Function**. 
-For all practically conceivable values of $N$ in our universe ($N \le 10^{80}$ atoms in the observable universe), $\alpha(N) < 5$. 
-Therefore, DSU operations run in effectively constant $O(1)$ time in practice.
-</details>
-
----
-
-## 2. YouTube Conceptual Anchor (25 Minutes)
-
-Recommended Video Anchors:
-1. **Abdul Bari**: [Dijkstra's Algorithm Shortest Path](https://www.youtube.com/watch?v=XB4MIexjvY0) (20 mins)
-2. **William Fiset**: [Topological Sort (Kahn's Algorithm) & Union Find / DSU](https://www.youtube.com/watch?v=eL-KzMXSXXI) (22 mins)
-
-### Core Invariants & Mental Model
-1. **Kahn's In-Degree Invariant**: A task can be executed if and only if all of its prerequisite dependencies have been satisfied (`in_degree == 0`).
-2. **Dijkstra Relaxation Invariant**: For every directed edge $(u, v)$ with weight $w$:
-   $$\text{if } \text{dist}[u] + w < \text{dist}[v] \implies \text{dist}[v] = \text{dist}[u] + w$$
-   Always store `(dist, node)` in the min-heap. If `d > dist[u]`, skip processing (stale heap entry).
-3. **DSU Representative Root Invariant**: Two elements $x$ and $y$ belong to the same connected component if and only if `find(x) == find(y)`. Path compression flattens the tree so that `parent[x]` points directly to the component root.
-
----
-
-## 3. Canonical Code Templates
-
-### Pattern A: Kahn's Algorithm for Topological Sort ($O(V + E)$ Time)
-```python
-from collections import deque, defaultdict
-from typing import List
-
-def topological_sort(num_courses: int, prerequisites: List[List[int]]) -> List[int]:
-    adj = defaultdict(list)
-    in_degree = [0] * num_courses
-    
-    for dest, src in prerequisites:
-        adj[src].append(dest)
-        in_degree[dest] += 1
-        
-    queue = deque([i for i in range(num_courses) if in_degree[i] == 0])
-    topo_order = []
-    
-    while queue:
-        node = queue.popleft()
-        topo_order.append(node)
-        
-        for neighbor in adj[node]:
-            in_degree[neighbor] -= 1
-            if in_degree[neighbor] == 0:
-                queue.append(neighbor)
-                
-    return topo_order if len(topo_order) == num_courses else []
+        // Union by rank
+        if (_rank[rootI] < _rank[rootJ]) {
+            _parent[rootI] = rootJ;
+        } else if (_rank[rootI] > _rank[rootJ]) {
+            _parent[rootJ] = rootI;
+        } else {
+            _parent[rootJ] = rootI;
+            _rank[rootI]++;
+        }
+        Components--;
+        return true;
+    }
+}
 ```
 
-### Pattern B: Dijkstra's Shortest Path Algorithm ($O((V + E) \log V)$ Time)
-```python
-import heapq
-from collections import defaultdict
-from typing import List
-
-def network_delay_time(times: List[List[int]], n: int, k: int) -> int:
-    adj = defaultdict(list)
-    for u, v, w in times:
-        adj[u].append((v, w))
-        
-    # (distance_so_far, current_node)
-    min_heap = [(0, k)]
-    shortest_dist = {}
-    
-    while min_heap:
-        d, u = heapq.heappop(min_heap)
-        
-        if u in shortest_dist:
-            continue
-        shortest_dist[u] = d
-        
-        for v, weight in adj[u]:
-            if v not in shortest_dist:
-                heapq.heappush(min_heap, (d + weight, v))
-                
-    return max(shortest_dist.values()) if len(shortest_dist) == n else -1
-```
-
-### Pattern C: Disjoint Set Union (DSU with Rank & Path Compression)
-```python
-class DSU:
-    def __init__(self, size: int):
-        self.parent = list(range(size))
-        self.rank = [0] * size
-        self.components = size
-
-    def find(self, x: int) -> int:
-        if self.parent[x] != x:
-            self.parent[x] = self.find(self.parent[x]) # Path compression
-        return self.parent[x]
-
-    def union(self, x: int, y: int) -> bool:
-        root_x = self.find(x)
-        root_y = self.find(y)
-        
-        if root_x == root_y:
-            return False # Already in same component (cycle detected)
-            
-        # Union by rank
-        if self.rank[root_x] < self.rank[root_y]:
-            self.parent[root_x] = root_y
-        elif self.rank[root_x] > self.rank[root_y]:
-            self.parent[root_y] = root_x
-        else:
-            self.parent[root_y] = root_x
-            self.rank[root_x] += 1
-            
-        self.components -= 1
-        return True
-```
+### 2. Dijkstra's Algorithm with Modern `PriorityQueue`
+In C# (.NET 6+), Dijkstra's algorithm uses `PriorityQueue<int, int>` where the priority is current distance:
+- Always skip stale nodes: `if (d > dist[u]) continue;`.
+- Initialize `dist` array with `int.MaxValue` (or `long.MaxValue` for large weights).
+- Dijkstra is **only valid for non-negative edge weights**. Negative edges violate the greedy property and require Bellman-Ford or SPFA.
 
 ---
 
-## 4. Coding Deep Dive: Worked Walkthrough (50 Minutes)
+## 📅 Day-by-Day Schedule
 
-### Problem: Course Schedule II (LeetCode 210)
-**Problem Statement**: There are `numCourses` courses labeled `0` to `n-1`. Given `prerequisites[i] = [a, b]` (must take `b` before `a`), return any valid course ordering, or `[]` if impossible.
-
-#### Pen-and-Paper Dry Run Trace
-Let `numCourses = 4`, `prerequisites = [[1, 0], [2, 0], [3, 1], [3, 2]]`.
-Edges: $0 \to 1$, $0 \to 2$, $1 \to 3$, $2 \to 3$.
-Initial In-Degrees:
-- Node 0: 0
-- Node 1: 1
-- Node 2: 1
-- Node 3: 2
-Queue at start: `[0]`.
-
-| Step | Popped Node | Neighbors Updated | New In-Degrees | New Nodes Enqueued | Current Output Order |
-|:---:|:---:|:---|:---|:---:|:---|
-| 1 | `0` | $1: 1 - 1 = 0$<br>$2: 1 - 1 = 0$ | Node 1: 0, Node 2: 0 | `[1, 2]` | `[0]` |
-| 2 | `1` | $3: 2 - 1 = 1$ | Node 3: 1 | None | `[0, 1]` |
-| 3 | `2` | $3: 1 - 1 = 0$ | Node 3: 0 | `[3]` | `[0, 1, 2]` |
-| 4 | `3` | None | - | None | `[0, 1, 2, 3]` |
-
-Queue is empty. Total courses ordered: $4 == \text{numCourses}$.
-Valid Topological Sort: `[0, 1, 2, 3]` (or `[0, 2, 1, 3]`).
-Time Complexity: $O(V + E) = O(4 + 4) = O(8)$.
-Space Complexity: $O(V + E)$ for adjacency list and in-degree array.
+### Day 1: Theory Anchor & Baseline Pattern (Kahn's Algorithm)
+- **Step 1 (45 mins) | Concept Video**: [Topological Sort & Kahn's Algorithm](https://www.youtube.com/watch?v=dis_c/TopologicalSort) or [Graph Topological Sorting](https://www.youtube.com/watch?v=eL-KzMXSXXI) by *Abdul Bari*
+  - Key focus: What is an in-degree? Why do zero in-degree nodes represent valid starting tasks?
+- **Step 2 (20 mins) | Pen & Paper Invariant**:
+  - Draw a DAG of 5 courses. Compute in-degrees, push 0 in-degree nodes into a queue, and trace the topological ordering.
+- **Step 3 (45 mins) | Problem 1 (Warm-Up)**:
+  - [Course Schedule II](https://leetcode.com/problems/course-schedule-ii/) (NeetCode - Medium)
+  - Objective: Return topological ordering or empty array if cycle exists.
+- **Step 4 (10 mins) | Active Recall**:
+  <details>
+  <summary><b>🧠 Self-Test: How does Kahn's algorithm detect if a graph contains a cycle?</b></summary>
+  <br>
+  <b>Answer:</b> If the total number of nodes dequeued and added to the topological ordering is strictly less than $V$, a cycle exists! Nodes participating in a directed cycle never reach an in-degree of 0.
+  </details>
 
 ---
 
-## 5. Curated Problem Set (16 Problems)
+### Day 2: DSU Cycle Detection in Undirected Graphs (Redundant Connection)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In an undirected graph with $N$ nodes and $N$ edges, how does Union-Find locate the edge that creates a cycle?</b></summary>
+  <br>
+  <b>Answer:</b> For each edge $(u, v)$, call <code>Union(u, v)</code>. If <code>Find(u) == Find(v)</code> before merging, $u$ and $v$ are already connected, meaning this edge is the redundant cycle creator!
+  </details>
+- **Deep Practice (75–85 mins) | Problem 2**:
+  - [Redundant Connection](https://leetcode.com/problems/redundant-connection/) (NeetCode - Medium)
+  - Thinking prompts: Implement standard Union-Find with path compression.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
 
-Track your daily solutions by checking off the markdown boxes.
-
-### NeetCode / LeetCode (Core)
-- [ ] [LeetCode 207: Course Schedule](https://leetcode.com/problems/course-schedule/) | Medium | Kahn's Cycle Detection
-- [ ] [LeetCode 210: Course Schedule II](https://leetcode.com/problems/course-schedule-ii/) | Medium | Topological Ordering Construction
-- [ ] [LeetCode 269: Alien Dictionary](https://leetcode.com/problems/alien-dictionary/) | Hard | Character Ordering Extraction & Topo Sort
-- [ ] [LeetCode 802: Find Eventual Safe States](https://leetcode.com/problems/find-eventual-safe-states/) | Medium | Reverse Graph Kahn's Algorithm
-- [ ] [LeetCode 743: Network Delay Time](https://leetcode.com/problems/network-delay-time/) | Medium | Classic Dijkstra Min-Heap
-- [ ] [LeetCode 1631: Path With Minimum Effort](https://leetcode.com/problems/path-with-minimum-effort/) | Medium | Modified Dijkstra / Minimax Effort
-- [ ] [LeetCode 787: Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops/) | Medium | Bellman-Ford / Bounded BFS
-- [ ] [LeetCode 684: Redundant Connection](https://leetcode.com/problems/redundant-connection/) | Medium | DSU Cycle Detection in Tree
-- [ ] [LeetCode 323: Number of Connected Components in an Undirected Graph](https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/) | Medium | DSU Component Count Tracking
-- [ ] [LeetCode 1584: Min Cost to Connect All Points](https://leetcode.com/problems/min-cost-to-connect-all-points/) | Medium | Kruskal's Algorithm with DSU / Prim's
-
-### CSES Problem Set (Free Tier, No Login Wall)
-- [ ] [CSES 1679: Course Schedule](https://cses.fi/problemset/task/1679) | Graph Algorithms | Classic Topological Sort Verification
-- [ ] [CSES 1669: Round Trip](https://cses.fi/problemset/task/1669) | Graph Algorithms | Cycle Detection and Reconstruction
-- [ ] [CSES 1671: Shortest Routes I](https://cses.fi/problemset/task/1671) | Graph Algorithms | Non-Negative Single-Source Dijkstra
-- [ ] [CSES 1672: Shortest Routes II](https://cses.fi/problemset/task/1672) | Graph Algorithms | Floyd-Warshall All-Pairs $O(V^3)$
-- [ ] [CSES 1675: Road Reparation](https://cses.fi/problemset/task/1675) | Graph Algorithms | Minimum Spanning Tree (Kruskal's)
-
-### Codeforces & AtCoder (Rating 800–1400)
-- [ ] [Codeforces 20C: Dijkstra?](https://codeforces.com/problemset/problem/20/C) | 1400 | Shortest Path with Full Node Array Reconstruction
-- [ ] [Codeforces 25D: Road Construction](https://codeforces.com/problemset/problem/25/D) | 1600 | DSU Redundant Edge Rerouting
-- [ ] [AtCoder ABC218_E: Destruction](https://atcoder.jp/contests/abc218/tasks/abc218_e) | 1200 | Maximum Weight Edge Pruning via DSU
+  ```csharp
+  public class Solution {
+      public int[] FindRedundantConnection(int[][] edges) {
+          int n = edges.Length;
+          int[] parent = new int[n + 1];
+          for (int i = 1; i <= n; i++) parent[i] = i;
+          
+          int Find(int x) {
+              if (parent[x] == x) return x;
+              return parent[x] = Find(parent[x]);
+          }
+          
+          foreach (var edge in edges) {
+              int rootU = Find(edge[0]);
+              int rootV = Find(edge[1]);
+              if (rootU == rootV) return edge; // Redundant edge
+              parent[rootU] = rootV;
+          }
+          return Array.Empty<int>();
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \cdot \alpha(N)) \approx O(N)$, Space: $O(N)$.
+  </details>
 
 ---
 
-## 6. Post-Session Active Recall Flashcards (15 Minutes)
+### Day 3: Component Counting via DSU
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Starting with $N$ isolated nodes, how does calling <code>Union(u, v)</code> track the count of connected components?</b></summary>
+  <br>
+  <b>Answer:</b> Every successful union that merges two previously disjoint roots decrements the total component count by exactly 1.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 3**:
+  - [Number of Connected Components in an Undirected Graph](https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/) (NeetCode - Medium)
+  - Thinking prompts: Start with `count = n`. For each edge, decrement `count` if roots differ.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int CountComponents(int n, int[][] edges) {
+          int[] parent = new int[n];
+          for (int i = 0; i < n; i++) parent[i] = i;
+          int components = n;
+          
+          int Find(int i) {
+              if (parent[i] == i) return i;
+              return parent[i] = Find(parent[i]);
+          }
+          
+          foreach (var edge in edges) {
+              int r1 = Find(edge[0]);
+              int r2 = Find(edge[1]);
+              if (r1 != r2) {
+                  parent[r1] = r2;
+                  components--;
+              }
+          }
+          return components;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(V + E \cdot \alpha(V))$, Space: $O(V)$.
+  </details>
+
+---
+
+### Day 4: Tree Validity Invariants (Graph Valid Tree)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: What are the two necessary and sufficient conditions for an undirected graph to be a valid tree?</b></summary>
+  <br>
+  <b>Answer:</b> 1. Exactly $N - 1$ edges (no cycles); 2. All $N$ nodes form exactly 1 connected component.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 4**:
+  - [Graph Valid Tree](https://leetcode.com/problems/graph-valid-tree/) (NeetCode - Medium)
+  - Thinking prompts: Quick exit `if (edges.Length != n - 1) return false;`. Then test connectivity with DSU or BFS.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public bool ValidTree(int n, int[][] edges) {
+          if (edges.Length != n - 1) return false;
+          
+          int[] parent = new int[n];
+          for (int i = 0; i < n; i++) parent[i] = i;
+          
+          int Find(int i) {
+              if (parent[i] == i) return i;
+              return parent[i] = Find(parent[i]);
+          }
+          
+          foreach (var edge in edges) {
+              int r1 = Find(edge[0]);
+              int r2 = Find(edge[1]);
+              if (r1 == r2) return false; // Cycle detected
+              parent[r1] = r2;
+          }
+          return true;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \cdot \alpha(N))$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 5: Midpoint Shift — Dijkstra's Algorithm
+- **Step 1 (20 mins) | Focused Video**: [Dijkstra's Algorithm Explained](https://www.youtube.com/watch?v=XB4MIexjvY0) by *Abdul Bari*
+  - Key focus: Relaxation step `if (dist[u] + weight < dist[v])`. Why greedy choice guarantees optimality with non-negative edges.
+- **Deep Practice (75 mins) | Problem 5**:
+  - [Network Delay Time](https://leetcode.com/problems/network-delay-time/) (NeetCode - Medium)
+  - Thinking prompts: Use modern .NET 6+ `PriorityQueue<(int node, int d), int>`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int NetworkDelayTime(int[][] times, int n, int k) {
+          List<(int dest, int w)>[] graph = new List<(int, int)>[n + 1];
+          for (int i = 1; i <= n; i++) graph[i] = new List<(int, int)>();
+          foreach (var t in times) {
+              graph[t[0]].Add((t[1], t[2]));
+          }
+          
+          int[] dist = new int[n + 1];
+          Array.Fill(dist, int.MaxValue);
+          dist[k] = 0;
+          
+          PriorityQueue<int, int> pq = new();
+          pq.Enqueue(k, 0);
+          
+          while (pq.Count > 0) {
+              pq.TryDequeue(out int u, out int d);
+              if (d > dist[u]) continue; // Stale path
+              
+              foreach (var (v, weight) in graph[u]) {
+                  if (dist[u] + weight < dist[v]) {
+                      dist[v] = dist[u] + weight;
+                      pq.Enqueue(v, dist[v]);
+                  }
+              }
+          }
+          
+          int maxDelay = 0;
+          for (int i = 1; i <= n; i++) {
+              if (dist[i] == int.MaxValue) return -1;
+              maxDelay = Math.Max(maxDelay, dist[i]);
+          }
+          return maxDelay;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(E \log V)$, Space: $O(V + E)$.
+  </details>
+
+---
+
+### Day 6: Minimum Spanning Tree (Min Cost to Connect All Points)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: What is the difference between Prim's algorithm and Kruskal's algorithm?</b></summary>
+  <br>
+  <b>Answer:</b> Prim's builds an MST by growing a single connected tree outward using a priority queue. Kruskal's sorts all edges globally and adds them one-by-one using Union-Find to prevent cycles.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 6**:
+  - [Min Cost to Connect All Points](https://leetcode.com/problems/min-cost-to-connect-all-points/) (NeetCode - Medium)
+  - Thinking prompts: Complete graph of $N$ points. Prim's algorithm with Manhattan distance $|x_1 - x_2| + |y_1 - y_2|$.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int MinCostConnectPoints(int[][] points) {
+          int n = points.Length;
+          bool[] inMst = new bool[n];
+          int[] minDist = new int[n];
+          Array.Fill(minDist, int.MaxValue);
+          minDist[0] = 0;
+          
+          int totalCost = 0;
+          for (int step = 0; step < n; step++) {
+              int u = -1;
+              for (int i = 0; i < n; i++) {
+                  if (!inMst[i] && (u == -1 || minDist[i] < minDist[u])) {
+                      u = i;
+                  }
+              }
+              
+              inMst[u] = true;
+              totalCost += minDist[u];
+              
+              for (int v = 0; v < n; v++) {
+                  if (!inMst[v]) {
+                      int dist = Math.Abs(points[u][0] - points[v][0]) + Math.Abs(points[u][1] - points[v][1]);
+                      if (dist < minDist[v]) {
+                          minDist[v] = dist;
+                      }
+                  }
+              }
+          }
+          return totalCost;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N^2)$ (dense graph Prim's), Space: $O(N)$.
+  </details>
+
+---
+
+### Day 7: Minimax Path via Dijkstra (Swim in Rising Water)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How does Dijkstra adapt to find the path that minimizes the MAXIMUM edge weight encountered?</b></summary>
+  <br>
+  <b>Answer:</b> The edge relaxation formula changes from additive <code>dist[u] + weight</code> to bottleneck <code>Math.Max(dist[u], grid[nr][nc])</code>. The priority queue always expands the cell with the lowest water elevation.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 7**:
+  - [Swim in Rising Water](https://leetcode.com/problems/swim-in-rising-water/) (NeetCode - Hard)
+  - Thinking prompts: Modified Dijkstra where distance is $\max(\text{water elevation})$.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int SwimInWater(int[][] grid) {
+          int n = grid.Length;
+          PriorityQueue<(int r, int c), int> pq = new();
+          bool[,] visited = new bool[n, n];
+          
+          pq.Enqueue((0, 0), grid[0][0]);
+          visited[0, 0] = true;
+          
+          int[] dr = { -1, 1, 0, 0 };
+          int[] dc = { 0, 0, -1, 1 };
+          
+          while (pq.Count > 0) {
+              pq.TryDequeue(out var cell, out int time);
+              int r = cell.r, c = cell.c;
+              
+              if (r == n - 1 && c == n - 1) return time;
+              
+              for (int i = 0; i < 4; i++) {
+                  int nr = r + dr[i];
+                  int nc = c + dc[i];
+                  
+                  if (nr >= 0 && nr < n && nc >= 0 && nc < n && !visited[nr, nc]) {
+                      visited[nr, nc] = true;
+                      int nextTime = Math.Max(time, grid[nr][nc]);
+                      pq.Enqueue((nr, nc), nextTime);
+                  }
+              }
+          }
+          return -1;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N^2 \log N)$, Space: $O(N^2)$.
+  </details>
+
+---
+
+### Day 8: String Lexicographical DAG (Alien Dictionary)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Alien Dictionary, what invalid prefix case makes an alien order impossible?</b></summary>
+  <br>
+  <b>Answer:</b> If an earlier word has a later word as a prefix but is strictly longer (e.g. <code>["apple", "app"]</code>). In lexicographical ordering, shorter prefixes must always come first.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 8**:
+  - [Alien Dictionary](https://leetcode.com/problems/alien-dictionary/) (NeetCode - Hard)
+  - Thinking prompts: Compare adjacent words. Find first differing character $c_1 \ne c_2$, add directed edge $c_1 \to c_2$. Run Kahn's algorithm.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public string AlienOrder(string[] words) {
+          Dictionary<char, HashSet<char>> adj = new();
+          Dictionary<char, int> inDegree = new();
+          
+          foreach (var w in words) {
+              foreach (var c in w) {
+                  adj.TryAdd(c, new HashSet<char>());
+                  inDegree.TryAdd(c, 0);
+              }
+          }
+          
+          for (int i = 0; i < words.Length - 1; i++) {
+              string w1 = words[i], w2 = words[i + 1];
+              if (w1.Length > w2.Length && w1.StartsWith(w2)) return ""; // Invalid prefix order
+              
+              for (int j = 0; j < Math.Min(w1.Length, w2.Length); j++) {
+                  if (w1[j] != w2[j]) {
+                      if (adj[w1[j]].Add(w2[j])) {
+                          inDegree[w2[j]]++;
+                      }
+                      break;
+                  }
+              }
+          }
+          
+          Queue<char> queue = new();
+          foreach (var kvp in inDegree) {
+              if (kvp.Value == 0) queue.Enqueue(kvp.Key);
+          }
+          
+          var sb = new System.Text.StringBuilder();
+          while (queue.Count > 0) {
+              char curr = queue.Dequeue();
+              sb.Append(curr);
+              
+              foreach (char next in adj[curr]) {
+                  if (--inDegree[next] == 0) {
+                      queue.Enqueue(next);
+                  }
+              }
+          }
+          return sb.Length == inDegree.Count ? sb.ToString() : "";
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(C)$ where $C$ is total characters across all words, Space: $O(U + E)$ where $U \le 26$.
+  </details>
+
+---
+
+### Day 9: State-Bounded Dijkstra / Bellman-Ford (Cheapest Flights)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why does standard Dijkstra fail on Cheapest Flights Within K Stops?</b></summary>
+  <br>
+  <b>Answer:</b> Standard Dijkstra greedily rejects a path to node $u$ with higher cost, even if that higher-cost path uses fewer stops and could reach the destination within $K$ stops while the cheaper path runs out of stops.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 9**:
+  - [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops/) (NeetCode - Medium)
+  - Thinking prompts: Bellman-Ford using $K + 1$ relaxations with a temporary copy of `dist` array.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int FindCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
+          int[] dist = new int[n];
+          Array.Fill(dist, int.MaxValue);
+          dist[src] = 0;
+          
+          for (int i = 0; i <= k; i++) {
+              int[] temp = (int[])dist.Clone();
+              foreach (var f in flights) {
+                  int u = f[0], v = f[1], price = f[2];
+                  if (dist[u] != int.MaxValue && dist[u] + price < temp[v]) {
+                      temp[v] = dist[u] + price;
+                  }
+              }
+              dist = temp;
+          }
+          return dist[dst] == int.MaxValue ? -1 : dist[dst];
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(K \cdot E)$, Space: $O(V)$.
+  </details>
+
+---
+
+### Day 10: Multi-Field String Equivalence (Accounts Merge)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Accounts Merge, what should be the elements connected by DSU?</b></summary>
+  <br>
+  <b>Answer:</b> The account indices $(0 \dots N - 1)$ or the emails themselves! If an email maps to an earlier account index, union the current account index with that earlier account index.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 10**:
+  - [Accounts Merge](https://leetcode.com/problems/accounts-merge/) (NeetCode - Medium)
+  - Thinking prompts: Map `email -> first_account_index`. Union account indices that share emails.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public IList<IList<string>> AccountsMerge(IList<IList<string>> accounts) {
+          int n = accounts.Count;
+          int[] parent = new int[n];
+          for (int i = 0; i < n; i++) parent[i] = i;
+          
+          int Find(int i) {
+              if (parent[i] == i) return i;
+              return parent[i] = Find(parent[i]);
+          }
+          
+          Dictionary<string, int> emailToAcc = new();
+          for (int i = 0; i < n; i++) {
+              for (int j = 1; j < accounts[i].Count; j++) {
+                  string email = accounts[i][j];
+                  if (emailToAcc.TryGetValue(email, out int prevAcc)) {
+                      int r1 = Find(i), r2 = Find(prevAcc);
+                      if (r1 != r2) parent[r1] = r2;
+                  } else {
+                      emailToAcc[email] = i;
+                  }
+              }
+          }
+          
+          Dictionary<int, List<string>> leaderEmails = new();
+          foreach (var kvp in emailToAcc) {
+              int root = Find(kvp.Value);
+              if (!leaderEmails.TryGetValue(root, out var list)) {
+                  list = new List<string>();
+                  leaderEmails[root] = list;
+              }
+              list.Add(kvp.Key);
+          }
+          
+          List<IList<string>> result = new();
+          foreach (var kvp in leaderEmails) {
+              kvp.Value.Sort(StringComparer.Ordinal);
+              List<string> row = new() { accounts[kvp.Key][0] };
+              row.AddRange(kvp.Value);
+              result.Add(row);
+          }
+          return result;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \cdot K \log(N \cdot K))$, Space: $O(N \cdot K)$.
+  </details>
+
+---
+
+### Day 11: Hierholzer's Eulerian Path (Reconstruct Itinerary)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Hierholzer's algorithm, why do we add nodes to the result list in postorder (after all outgoing edges are exhausted)?</b></summary>
+  <br>
+  <b>Answer:</b> Postorder insertion ensures that dead-end cycles and sub-tours are resolved first and prepended in reverse, guaranteeing a continuous Eulerian path that visits every edge.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 11**:
+  - [Reconstruct Itinerary](https://leetcode.com/problems/reconstruct-itinerary/) (NeetCode - Hard)
+  - Thinking prompts: Min-heap or sorted list of airport destinations for lexicographical tie-breaking.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public IList<string> FindItinerary(IList<IList<string>> tickets) {
+          Dictionary<string, PriorityQueue<string, string>> adj = new();
+          foreach (var t in tickets) {
+              if (!adj.TryGetValue(t[0], out var pq)) {
+                  pq = new PriorityQueue<string, string>();
+                  adj[t[0]] = pq;
+              }
+              pq.Enqueue(t[1], t[1]);
+          }
+          
+          LinkedList<string> route = new();
+          Dfs("JFK", adj, route);
+          return route.ToList();
+      }
+      
+      private void Dfs(string airport, Dictionary<string, PriorityQueue<string, string>> adj, LinkedList<string> route) {
+          if (adj.TryGetValue(airport, out var pq)) {
+              while (pq.Count > 0) {
+                  string next = pq.Dequeue();
+                  Dfs(next, adj, route);
+              }
+          }
+          route.AddFirst(airport); // Postorder insertion
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(E \log E)$, Space: $O(V + E)$.
+  </details>
+
+---
+
+### Day 12: CSES & Competitive Benchmarks + Spaced Retrieval
+- **Benchmark 1**: [CSES: Course Schedule](https://cses.fi/problemset/task/1679) (Kahn's topological sort on $10^5$ nodes)
+- **Benchmark 2**: [CSES: Shortest Routes I](https://cses.fi/problemset/task/1671) (High-speed Dijkstra with 64-bit distances)
+- **Benchmark 3**: [CSES: Road Reparation](https://cses.fi/problemset/task/1675) (Kruskal's MST / total road cost)
+- **Benchmark 4**: [CSES: Road Construction](https://cses.fi/problemset/task/1676) (DSU maintaining max component size)
+- **Benchmark 5**: [Codeforces 20C - Dijkstra?](https://codeforces.com/problemset/problem/20/C) (Dijkstra with full path reconstruction)
+
+---
+
+### Spaced Retrieval Flashcards
 
 <details>
-<summary><strong>Flashcard 1: In Dijkstra's Algorithm, why is it critical to check `if d > shortest_dist[u]: continue` after popping from the min-heap?</strong></summary>
-
-Python's `heapq` does not support an efficient `decrease_key` operation. When a shorter distance to node $u$ is discovered, a new `(new_dist, u)` pair is pushed onto the heap, leaving the older, larger `(old_dist, u)` in the heap. 
-Skipping stale entries when popped guarantees that each vertex's adjacency list is relaxed at most once, maintaining $O((V + E) \log V)$ runtime instead of degrading exponentially.
+<summary><b>Flashcard 1: What is Path Compression in DSU, and why is its complexity near-constant?</b></summary>
+<br>
+Path compression flattens the tree during <code>Find(x)</code> by directly attaching every visited node to the root. Combined with union by rank/size, the amortized time per operation becomes $O(\alpha(N))$ (inverse Ackermann function), which is $\le 4$ for all realistic values of $N$.
 </details>
 
 <details>
-<summary><strong>Flashcard 2: How does Kruskal's algorithm use DSU to construct a Minimum Spanning Tree (MST)?</strong></summary>
-
-1. Sort all edges $E$ in ascending order of their weights.
-2. Initialize a DSU with all $V$ vertices.
-3. For each edge $(u, v, w)$ in sorted order:
-   - Call `dsu.union(u, v)`.
-   - If `union` returns `True`, $u$ and $v$ were previously disconnected; include this edge in the MST and accumulate its weight.
-   - If `union` returns `False`, adding this edge would form a cycle; discard it.
-4. Stop when $V - 1$ edges have been accepted.
+<summary><b>Flashcard 2: Why can Dijkstra fail when negative edge weights exist?</b></summary>
+<br>
+Dijkstra assumes that once a node is dequeued from the priority queue, its shortest distance is finalized and will never decrease. A negative edge encountered later could lower that finalized distance, violating the greedy invariant.
 </details>
 
 <details>
-<summary><strong>Flashcard 3: What is the difference between Path Compression and Union by Rank?</strong></summary>
-
-- **Path Compression**: Executed during `find(x)`. It points every node along the lookup traversal directly to the root, dramatically flattening tree depth for subsequent queries.
-- **Union by Rank / Size**: Executed during `union(x, y)`. It attaches the tree with smaller depth (or smaller size) under the root of the larger tree, preventing tree depth from degenerating into a tall line.
-Together, they achieve $O(\alpha(N))$ amortized complexity.
+<summary><b>Flashcard 3: How does Kahn's algorithm break ties when multiple valid topological sorts exist?</b></summary>
+<br>
+By replacing the standard FIFO <code>Queue&lt;int&gt;</code> with a <code>PriorityQueue&lt;int, int&gt;</code> (min-heap), you can guarantee that the lexicographically smallest topological sort is produced.
 </details>
 
 ---
 
-[← Topic 10: Graphs I](10-graphs-traversal.md) \| [Next Topic: 1-D Dynamic Programming →](12-1d-dp.md)
+## 🎯 Topic Checklist (16 Problems)
+
+| Day | # | Problem | Platform | Difficulty | Status |
+|:---:|:---:|:---|:---:|:---:|:---:|
+| Day 1 | 1 | [Course Schedule II](https://leetcode.com/problems/course-schedule-ii/) | NeetCode | Medium | - [ ] |
+| Day 2 | 2 | [Redundant Connection](https://leetcode.com/problems/redundant-connection/) | NeetCode | Medium | - [ ] |
+| Day 3 | 3 | [Number of Connected Components](https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/) | NeetCode | Medium | - [ ] |
+| Day 4 | 4 | [Graph Valid Tree](https://leetcode.com/problems/graph-valid-tree/) | NeetCode | Medium | - [ ] |
+| Day 5 | 5 | [Network Delay Time](https://leetcode.com/problems/network-delay-time/) | NeetCode | Medium | - [ ] |
+| Day 6 | 6 | [Min Cost to Connect All Points](https://leetcode.com/problems/min-cost-to-connect-all-points/) | NeetCode | Medium | - [ ] |
+| Day 7 | 7 | [Swim in Rising Water](https://leetcode.com/problems/swim-in-rising-water/) | NeetCode | Hard | - [ ] |
+| Day 8 | 8 | [Alien Dictionary](https://leetcode.com/problems/alien-dictionary/) | NeetCode | Hard | - [ ] |
+| Day 9 | 9 | [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops/) | NeetCode | Medium | - [ ] |
+| Day 10 | 10 | [Accounts Merge](https://leetcode.com/problems/accounts-merge/) | NeetCode | Medium | - [ ] |
+| Day 11 | 11 | [Reconstruct Itinerary](https://leetcode.com/problems/reconstruct-itinerary/) | NeetCode | Hard | - [ ] |
+| Day 12 | 12 | [Course Schedule (CSES)](https://cses.fi/problemset/task/1679) | CSES | Medium | - [ ] |
+| Day 12 | 13 | [Shortest Routes I](https://cses.fi/problemset/task/1671) | CSES | Medium | - [ ] |
+| Day 12 | 14 | [Road Reparation](https://cses.fi/problemset/task/1675) | CSES | Medium | - [ ] |
+| Day 12 | 15 | [Road Construction](https://cses.fi/problemset/task/1676) | CSES | Medium | - [ ] |
+| Day 12 | 16 | [Dijkstra? (20C)](https://codeforces.com/problemset/problem/20/C) | Codeforces | Rating 1400 | - [ ] |
+
+---
+
+[⬅️ Previous Topic: Graphs I](10-graphs-traversal.md) | [Home](index.md) | [Next Topic: 1-D Dynamic Programming ➡️](12-1d-dp.md)
+

@@ -1,114 +1,145 @@
 ---
 layout: default
-title: "Home | DSA Mastery Curriculum"
+title: "Home"
+permalink: /
 ---
 
-# Data Structures & Algorithms: The 24-Week Mastery Curriculum
+# C# DSA Mastery: Active Recall Roadmap
 
-> A complete, publish-ready, active-recall-driven DSA roadmap optimized for **1.5 to 2.0 hours per day** (1–2 problems daily). Built with zero build steps, zero CSS, and zero external dependencies—hosted directly via Jekyll on GitHub Pages.
-
----
-
-## 1. Pedagogical Architecture & Philosophy
-
-Most DSA learners fail not because they lack intelligence, but because they succumb to the **Illusion of Competence**: watching an algorithm tutorial, feeling an intuitive sense of understanding, and finding themselves completely unable to write code on a blank editor 48 hours later.
-
-This curriculum is engineered strictly upon cognitive science principles:
-1. **Active Retrieval Practice (Pre-Test Effect)**: Attempting to recall core invariants *before* viewing solutions triggers neural plasticity and primes your brain to encode edge cases.
-2. **Cognitive Load Optimization**: Each session targets exactly **one core invariant** and **1–2 canonical problems** within a strict 90–120 minute window, preventing mental fatigue.
-3. **Spaced Deliberate Practice**: Concepts from Day 1 re-emerge in Week 6, Week 12, and Week 20 in more complex graph and dynamic programming scenarios.
+> **Philosophy**: Master Data Structures and Algorithms with a calm, unhurried **1.5 to 2 hours per day** study schedule. Strictly **one problem per day** to prioritize deep thinking, paper-and-pencil invariant tracing, and production-grade **C# (.NET 6+)** implementations over rote memorization.
 
 ---
 
-## 2. The Strict Daily 90–120 Minute Protocol
+## 🧠 The Active Recall & Paper-First Methodology
 
-Every day follows this non-negotiable 4-block timebox. Set a physical timer before beginning.
+Most engineers fail technical interviews not because they lack intelligence, but because of **passive recognition illusion**—watching a video solution, nodding along, and assuming the brain has wired the neural pathways. 
 
-```text
-+----------------------------------------------------------------------------------+
-|                     DAILY TIME BUDGET: 90 - 120 MINUTES                          |
-+----------------------+--------------------+--------------------+-----------------+
-| 00:00 - 00:15 (15m)  | 00:15 - 00:40 (25m)| 00:40 - 01:30 (50m)| 01:30 - 01:45   |
-| Active Recall        | YouTube Conceptual | Coding Deep Dive   | Post-Session    |
-| Pre-Test             | Anchor             | (1-2 Problems)     | Flashcards      |
-+----------------------+--------------------+--------------------+-----------------+
+This curriculum enforces strict cognitive friction through **Active Recall** and **Spaced Retrieval**:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   DAILY 90–120 MINUTE TIMEBOX                          │
+│                                                                        │
+│  [10 Mins]  Closed-Book Warm-up: Answer yesterday's invariant check   │
+│  [25 Mins]  Paper & Pencil Tracing: Dry-run invariants & edge cases   │
+│  [50 Mins]  C# Implementation: Clean, idiomatic .NET code             │
+│  [15 Mins]  Reflection Log: Record time/space trade-offs & edge cases │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Block 1: 00:00 – 00:15 (15 min) | Active Recall Pre-Test
-* **Objective**: Closed-book mental activation.
-* **Protocol**: Open today's module. Do **not** look at the code templates. Read the pre-test prompts and write your answers down on paper or in a scratchpad.
-* **Why**: Forces memory retrieval under friction, exposing exact gaps in understanding.
+### The Two Session Formats
 
-### Block 2: 00:15 – 00:40 (25 min) | YouTube Conceptual Anchor
-* **Objective**: Mental model construction & invariant extraction.
-* **Protocol**: Watch the curated 15–25 minute video anchor at 1.25x–1.5x speed. Focus exclusively on:
-  1. What is the fundamental invariant maintained across iterations?
-  2. Why does the naive $O(N^2)$ brute force fail?
-  3. What state is tracked in auxiliary memory?
+#### 1. Theory Days (Day 1 of Each Topic, ~Once Every 10–12 Days)
+- **40–50 mins | Concept Video**: Watch a deep-dive lecture from masters (*NeetCode*, *Abdul Bari*, *William Fiset*). Pause frequently to sketch state transitions.
+- **15–20 mins | Invariant Formulation**: Formulate the invariant in natural language (e.g., *"At the start of iteration $i$, $window$ contains at most $K$ distinct elements"*).
+- **45–50 mins | Problem 1 (Warm-Up)**: Implement the baseline canonical problem in C#.
+- **10 mins | Closed-Book Self-Test**: Test yourself on the fundamental invariant before sleeping.
 
-### Block 3: 00:40 – 01:30 (50 min) | Coding Deep Dive (1–2 Problems)
-* **Objective**: Implementation without crutches.
-* **Protocol**:
-  1. **Minutes 00–15**: Pen-and-paper dry run on a small, hand-crafted test case (including an edge case: empty input, duplicates, or single-element array).
-  2. **Minutes 15–40**: Write the code on your platform (LeetCode / CSES / Codeforces). No copy-pasting. Run against sample tests.
-  3. **Minutes 40–50**: Analyze time & space complexity, annotate runtime invariants, and commit solution.
-* **Rule**: If stuck after 25 minutes of dry running, look at the **first hint only**. Never jump to the full code solution.
-
-### Block 4: 01:30 – 01:45 (15 min) | Post-Session Active Recall Flashcards
-* **Objective**: Memory consolidation before sleep.
-* **Protocol**: Close all tabs. Answer the 4–5 flashcard review prompts located at the bottom of the module using `<details><summary>` dropdowns.
+#### 2. Practice Days (Days 2 to 12, Strictly 1 Problem/Day)
+- **10 mins | Spaced Retrieval**: Answer the active recall prompt inside the collapsible `<details>` tag without looking at your notes.
+- **25 mins | Mandatory Thinking Window**: **No typing for 25 minutes**. Draw pointers, recursion trees, or monotonic stacks on physical paper. Trace arrays with small $N$ ($N=0, 1, 2$) and edge cases (duplicates, negative values).
+- **50 mins | C# Implementation**: Write type-safe, idiomatic C# code. Verify boundaries and off-by-one errors.
+- **15 mins | Invariant Logging**: Document where your initial hypothesis failed and log the exact edge case that triggered an off-by-one or runtime exception.
 
 ---
 
-## 3. Curriculum Syllabus (15 Core Topics)
+## 🛠️ C# (.NET 6+) DSA Cheatsheet & Mental Models
 
-Each topic module contains conceptual foundations, invariant templates, worked walkthroughs, self-testing flashcards, and a curated set of **15+ problems** drawn from NeetCode/LeetCode, CSES, and Codeforces/AtCoder.
+In competitive programming and technical interviews, C# is an exceptional language provided you understand the runtime costs of managed memory and garbage collection.
 
-| # | Topic Module | Core Invariant / Pattern | Curated Problems | Suggested Weeks |
-|---|---|---|---|---|
-| 01 | [Arrays, Hashing & Frequency Counting](01-arrays-and-hashing.md) | Value-to-Index mapping, Prefix parity, $O(1)$ lookups | 16 Problems | Weeks 1 – 2 |
-| 02 | [Two Pointers](02-two-pointers.md) | Sorted space monotonicity, Opposing & parallel scans | 15 Problems | Weeks 3 – 4 |
-| 03 | [Sliding Window](03-sliding-window.md) | Contiguous subarray state maintenance, Expand/Contract | 15 Problems | Weeks 5 – 6 |
-| 04 | [Stack & Monotonic Stack](04-stack.md) | LIFO processing, Next Greater/Smaller Element invariant | 15 Problems | Weeks 7 – 8 |
-| 05 | [Binary Search & Search Space Reduction](05-binary-search.md) | Monotonic predicate $P(x)$, Boundary convergence | 16 Problems | Weeks 9 – 10 |
-| 06 | [Linked Lists & Fast/Slow Pointers](06-linked-lists.md) | Pointer manipulation, Tortoise & Hare cycle invariant | 15 Problems | Week 11 |
-| 07 | [Binary Trees & BSTs](07-binary-trees.md) | Recursive decomposition, Depth/Height state, BST ordering | 16 Problems | Weeks 12 – 13 |
-| 08 | [Heaps & Priority Queues](08-heaps.md) | Dynamic extremum tracking, Top-K maintenance | 15 Problems | Week 14 |
-| 09 | [Backtracking & Recursive Search](09-backtracking.md) | State tree exploration, Choice-Constraint-Undo cycle | 15 Problems | Weeks 15 – 16 |
-| 10 | [Graphs I: BFS, DFS & Grid Traversals](10-graphs-traversal.md) | Unweighted shortest path, Connected components, Visited set | 16 Problems | Weeks 17 – 18 |
-| 11 | [Graphs II: Topo Sort, Dijkstra & DSU](11-graphs-advanced.md) | DAG dependencies, Non-negative edge SP, Disjoint sets | 16 Problems | Weeks 19 – 20 |
-| 12 | [1-D Dynamic Programming](12-1d-dp.md) | Optimal substructure, Overlapping subproblems, Memoization | 16 Problems | Weeks 21 – 22 |
-| 13 | [2-D Dynamic Programming & Knapsack](13-2d-dp.md) | 2D Grid state, Subsequence alignment, Decision branches | 15 Problems | Week 23 |
-| 14 | [Greedy Algorithms & Intervals](14-greedy-intervals.md) | Locally optimal choice, Interval sorting by endpoints | 15 Problems | Week 24 |
-| 15 | [Bit Manipulation & Core Math](15-bit-manipulation-math.md) | Bitwise masks, XOR cancellation, Modular arithmetic | 15 Problems | Supplemental / Review |
+### 1. Collections & Big-O Reference
 
-**Total Curated Problems across the Course**: **230+ problems** (all free to access).
+| Data Structure | C# Type | Common Methods | Complexity | Gotcha / Tip |
+|:---|:---|:---|:---:|:---|
+| **Dynamic Array** | `List<T>` | `Add()`, `RemoveAt(i)`, `Count` | $O(1)$ amortized append, $O(N)$ remove | Pre-size with `new List<T>(capacity)` to eliminate reallocation overhead. |
+| **Hash Map** | `Dictionary<TKey, TValue>` | `ContainsKey()`, `TryGetValue()`, `[key]` | $O(1)$ avg, $O(N)$ worst | Prefer `TryGetValue()` over `ContainsKey()` followed by indexer to avoid double hashing. |
+| **Hash Set** | `HashSet<T>` | `Add()`, `Contains()`, `Remove()` | $O(1)$ avg | Implement `IEqualityComparer<T>` for custom class keys or use records / ValueTuples. |
+| **LIFO Stack** | `Stack<T>` | `Push()`, `Pop()`, `Peek()`, `Count` | $O(1)$ | Avoid LINQ `.ElementAt()`; iterate natively with `foreach` or array copy. |
+| **FIFO Queue** | `Queue<T>` | `Enqueue()`, `Dequeue()`, `Peek()` | $O(1)$ | Circular array under the hood. |
+| **Min/Max Heap** | `PriorityQueue<TElement, TPriority>` | `Enqueue()`, `Dequeue()`, `Peek()` | $O(\log N)$ | Available in **.NET 6+**. Min-heap by default. For Max-heap, pass a custom `Comparer<TPriority>.Create((a, b) => b.CompareTo(a))`. |
+| **Doubly Linked List** | `LinkedList<T>` | `AddFirst()`, `AddLast()`, `Remove()` | $O(1)$ node insert/delete | Node allocations produce GC pressure; prefer array-backed structures when possible. |
+| **Sorted Set / Map** | `SortedSet<T>`, `SortedDictionary<K, V>` | `Add()`, `Remove()`, `Min`, `Max` | $O(\log N)$ | Red-Black Tree backed. |
+
+### 2. High-Performance C# Idioms
+
+#### Avoiding Double Hashing with `CollectionsMarshal` or `TryGetValue`
+```csharp
+// ❌ Suboptimal: 2 hash lookups
+if (counts.ContainsKey(item)) {
+    counts[item]++;
+} else {
+    counts[item] = 1;
+}
+
+// ✅ Idiomatic C#: 1 hash lookup
+if (counts.TryGetValue(item, out int existingCount)) {
+    counts[item] = existingCount + 1;
+} else {
+    counts[item] = 1;
+}
+
+// 🚀 Advanced .NET 6+ (Zero allocations):
+ref int count = ref System.Runtime.InteropServices.CollectionsMarshal.GetValueRefOrAddDefault(counts, item, out _);
+count++;
+```
+
+#### Lightweight ValueTuples vs Custom Classes
+```csharp
+// Use ValueTuples for BFS coordinates, Dijkstra graph edges, and memoization keys
+Queue<(int row, int col, int dist)> queue = new();
+queue.Enqueue((0, 0, 0));
+
+// Dictionary with tuple composite keys (natively implements value equality)
+Dictionary<(int index, int remainingSum), int> memo = new();
+```
+
+#### Array Slicing Without Allocations (`Span<T>`)
+```csharp
+int[] array = new int[] { 10, 20, 30, 40, 50 };
+ReadOnlySpan<int> slice = array.AsSpan(1, 3); // Points directly to [20, 30, 40] without memory allocation
+```
+
+#### Beware of LINQ in Hot Loops
+```csharp
+// ❌ Avoid in O(N^2) or inner loops: creates delegate allocations and enumerator structs
+int maxVal = nums.Max(); 
+
+// ✅ Use direct iteration or Math.Max inside the loop:
+int maxVal = int.MinValue;
+for (int i = 0; i < nums.Length; i++) {
+    if (nums[i] > maxVal) maxVal = nums[i];
+}
+```
 
 ---
 
-## 4. Master Pacing Calendar
+## 🗺️ Topic Curriculum Overview
 
-Ready to map your 24-week journey day by day?
+Each module spans **10 to 12 days** and contains a minimum of **15 curated problems** from NeetCode, CSES Problem Set, and Codeforces.
 
-👉 **[Access the Full 24-Week Daily Schedule](schedule.md)**
-
-The calendar assigns exactly 1–2 specific problems to each day of the week, with dedicated consolidation and mock contest days on weekends.
+| # | Topic | Key Mental Model | Duration | Curated Problems |
+|:---:|:---|:---|:---:|:---:|
+| 01 | [Arrays, Hashing & Frequency Counting](01-arrays-and-hashing.md) | Value-to-index mapping, prefix state, bucket sort | 11 Days | 15 Problems |
+| 02 | [Two Pointers](02-two-pointers.md) | Inward squeeze, fast & slow scan, partition invariants | 11 Days | 15 Problems |
+| 03 | [Sliding Window](03-sliding-window.md) | Monotonic window expansion & dynamic contraction | 11 Days | 15 Problems |
+| 04 | [Stack & Monotonic Stack](04-stack.md) | Immediate next greater/smaller element, nearest boundary | 11 Days | 15 Problems |
+| 05 | [Binary Search & Answer Space](05-binary-search.md) | Predicate monotonicity $FF\dots TT$, boundary convergence | 11 Days | 15 Problems |
+| 06 | [Linked Lists & Pointer Logic](06-linked-lists.md) | Sentinel dummy head, pointer rewiring, Floyd's cycle | 11 Days | 15 Problems |
+| 07 | [Binary Trees & BSTs](07-binary-trees.md) | Subtree induction, DFS state return, BFS level tracking | 12 Days | 16 Problems |
+| 08 | [Heaps & Priority Queues](08-heaps.md) | Dynamic order statistics, $K$-way merge, two-heap median | 11 Days | 15 Problems |
+| 09 | [Backtracking & Recursion](09-backtracking.md) | Decision tree traversal, state exploration & restoration | 11 Days | 15 Problems |
+| 10 | [Graphs I: BFS, DFS & Grid Traversals](10-graphs-traversal.md) | Connected components, shortest path in unweighted graph | 11 Days | 15 Problems |
+| 11 | [Graphs II: Topo Sort, Dijkstra & DSU](11-graphs-advanced.md) | Dependency resolution, non-negative weighted paths, disjoint sets | 12 Days | 16 Problems |
+| 12 | [1-D Dynamic Programming](12-1d-dp.md) | Subproblem recurrence, optimal substructure, memory rolling | 11 Days | 15 Problems |
+| 13 | [2-D Dynamic Programming & Knapsack](13-2d-dp.md) | Grid paths, string alignment, bounded/unbounded choice | 12 Days | 16 Problems |
+| 14 | [Greedy Algorithms & Intervals](14-greedy-intervals.md) | Local optimum, sorting invariants, endpoint scheduling | 11 Days | 15 Problems |
+| 15 | [Bit Manipulation & Math Fundamentals](15-bit-manipulation-math.md) | Bitwise masks, XOR cancellation, modular arithmetic | 11 Days | 15 Problems |
 
 ---
 
-## 5. How to Track Your Progress
+## 📅 High-Level Roadmap
 
-This curriculum uses pure GitHub Flavored Markdown task lists. To track your personal progress:
+View the complete week-by-week timeline and study calendar: **[Course Schedule](schedule.md)**.
 
-1. Fork this repository to your personal GitHub account.
-2. Enable **GitHub Pages** in your repository settings (`Settings -> Pages -> Branch: main -> / (root)`).
-3. As you solve each problem and complete flashcard reviews, check off the markdown boxes directly on GitHub or in your editor:
-   ```markdown
-   - [x] Two Sum (Solved in 18 min on 2026-11-16)
-   - [ ] Valid Anagram
-   ```
-4. Commit your changes. GitHub Pages updates automatically with zero compilation steps.
+Ready to begin? Start with **[Topic 1: Arrays, Hashing & Frequency Counting](01-arrays-and-hashing.md)**.
 
----
-
-[Start Topic 01: Arrays, Hashing & Frequency Counting →](01-arrays-and-hashing.md)

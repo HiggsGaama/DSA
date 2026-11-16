@@ -1,191 +1,488 @@
 ---
-layout: default
-title: "Topic 04: Stack & Monotonic Stack"
+layout: page
+title: "Stack & Monotonic Stack"
+permalink: /stack/
 ---
 
-# Topic 04: Stack & Monotonic Stack
+# Stack & Monotonic Stack
 
-[← Topic 03: Sliding Window](03-sliding-window.md) \| [Schedule](schedule.md) \| [Next: Binary Search →](05-binary-search.md)
-
----
-
-## Daily Timeboxing (1.5 – 2.0 Hours)
-- **00:00 – 00:15 (15m) | Active Recall Pre-Test**: Answer the conceptual questions below before reading further.
-- **00:15 – 00:40 (25m) | YouTube Conceptual Anchor**: Watch the curated video segment on monotonic stack invariants.
-- **00:40 – 01:30 (50m) | Coding Deep Dive**: Pen-and-paper dry run of Largest Rectangle in Histogram & Daily Temperatures.
-- **01:30 – 01:45 (15m) | Post-Session Flashcards**: Complete the flashcard prompts from memory.
+> **Estimated Time**: 11 Days • **Pace**: 1.5–2 hours/day (Strictly 1 problem/day) • **Language**: C# (.NET 6+)
 
 ---
 
-## 1. Active Recall Pre-Test (15 Minutes)
-Attempt to answer these questions on paper before expanding the solutions.
+## 🛠️ C# Mental Model & Gotchas
+
+### 1. `Stack<T>` Mechanics in .NET
+- Under the hood, `Stack<T>` is backed by a dynamic array $T[]$. Pushing and popping are amortized $O(1)$.
+- Pre-size your stack when the upper bound is known: `new Stack<int>(s.Length)`.
+- Always check `stack.Count > 0` before calling `stack.Peek()` or `stack.Pop()` to prevent `InvalidOperationException`.
+- Store composite state using ValueTuples: `Stack<(int val, int minSoFar)>` or `Stack<(int height, int index)>`. This avoids allocating extra helper node objects on the heap.
+
+### 2. The Monotonic Stack Invariant
+A monotonic stack maintains elements in strictly increasing or decreasing order.
+- When an incoming element violates the monotonic order, elements are popped from the stack until the invariant is restored.
+- **The Core Rule**: The element being popped finds its **nearest greater or smaller element boundary** at the exact moment of being popped!
+- Every element is pushed once and popped at most once, providing a strict $O(N)$ amortized time guarantee for range boundary queries.
+
+---
+
+## 📅 Day-by-Day Schedule
+
+### Day 1: Theory Anchor & Baseline Pattern
+- **Step 1 (45 mins) | Concept Video**: [Stack Data Structure Explained](https://www.youtube.com/watch?v=FNZ5o9bEBjo) by *Abdul Bari*
+  - Key focus: What is LIFO? How does the call stack mirror explicit stack execution?
+- **Step 2 (20 mins) | Pen & Paper Invariant**:
+  - Trace `"{[()]}"` and `"{[(])}"`. For each character, write down the stack state. When does mismatch detection trigger?
+- **Step 3 (45 mins) | Problem 1 (Warm-Up)**:
+  - [Valid Parentheses](https://leetcode.com/problems/valid-parentheses/) (NeetCode - Easy)
+  - Objective: Match closing brackets against top of `Stack<char>`.
+- **Step 4 (10 mins) | Active Recall**:
+  <details>
+  <summary><b>🧠 Self-Test: What happens if you call <code>stack.Pop()</code> on an empty C# stack?</b></summary>
+  <br>
+  <b>Answer:</b> C# throws an <code>InvalidOperationException: Stack empty</code>. Always verify <code>stack.Count &gt; 0</code> before popping.
+  </details>
+
+---
+
+### Day 2: Parallel State Tracking (Min Stack)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why cannot a single <code>int min</code> variable maintain the minimum of a stack when elements are popped?</b></summary>
+  <br>
+  <b>Answer:</b> If the current minimum is popped, there is no historical record of what the previous minimum was without scanning the entire stack ($O(N)$). We must maintain a parallel history of minimums.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 2**:
+  - [Min Stack](https://leetcode.com/problems/min-stack/) (NeetCode - Medium)
+  - Thinking prompts: Either maintain two stacks (`mainStack` and `minStack`) or push a single ValueTuple `(int val, int currentMin)` onto one stack.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class MinStack {
+      private readonly Stack<(int val, int min)> _stack;
+
+      public MinStack() {
+          _stack = new Stack<(int val, int min)>();
+      }
+      
+      public void Push(int val) {
+          int currentMin = _stack.Count == 0 ? val : Math.Min(val, _stack.Peek().min);
+          _stack.Push((val, currentMin));
+      }
+      
+      public void Pop() {
+          _stack.Pop();
+      }
+      
+      public int Top() {
+          return _stack.Peek().val;
+      }
+      
+      public int GetMin() {
+          return _stack.Peek().min;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(1)$ for all operations, Space: $O(N)$ using tuple stack.
+  </details>
+
+---
+
+### Day 3: Postfix Evaluation (Reverse Polish Notation)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Reverse Polish Notation, when an operator is encountered, which operand is on top of the stack?</b></summary>
+  <br>
+  <b>Answer:</b> The right-hand (second) operand is popped first, followed by the left-hand (first) operand. For non-commutative operations like subtraction and division, order matters: <code>int b = stack.Pop(); int a = stack.Pop(); result = a - b;</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 3**:
+  - [Evaluate Reverse Polish Notation](https://leetcode.com/problems/evaluate-reverse-polish-notation/) (NeetCode - Medium)
+  - Thinking prompts: Use `int.TryParse` or `switch` statements to apply operators `+`, `-`, `*`, `/`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int EvalRPN(string[] tokens) {
+          Stack<int> stack = new();
+          
+          foreach (string token in tokens) {
+              if (token == "+" || token == "-" || token == "*" || token == "/") {
+                  int b = stack.Pop();
+                  int a = stack.Pop();
+                  int res = token switch {
+                      "+" => a + b,
+                      "-" => a - b,
+                      "*" => a * b,
+                      "/" => a / b,
+                      _ => 0
+                  };
+                  stack.Push(res);
+              } else {
+                  stack.Push(int.Parse(token));
+              }
+          }
+          return stack.Pop();
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 4: Combinatorial Stack Invariant (Generate Parentheses)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In recursive parenthesis generation for $N$ pairs, under what conditions can you add an open parenthesis vs a closed parenthesis?</b></summary>
+  <br>
+  <b>Answer:</b> You can add <code>'('</code> if <code>openCount &lt; n</code>. You can add <code>')'</code> if <code>closeCount &lt; openCount</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 4**:
+  - [Generate Parentheses](https://leetcode.com/problems/generate-parentheses/) (NeetCode - Medium)
+  - Thinking prompts: Backtracking with a character buffer or recursion maintaining `open` and `close` counts.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public IList<string> GenerateParenthesis(int n) {
+          List<string> result = new();
+          char[] current = new char[2 * n];
+          Backtrack(0, 0, 0, n, current, result);
+          return result;
+      }
+      
+      private void Backtrack(int idx, int open, int close, int n, char[] current, List<string> result) {
+          if (idx == 2 * n) {
+              result.Add(new string(current));
+              return;
+          }
+          
+          if (open < n) {
+              current[idx] = '(';
+              Backtrack(idx + 1, open + 1, close, n, current, result);
+          }
+          if (close < open) {
+              current[idx] = ')';
+              Backtrack(idx + 1, open, close + 1, n, current, result);
+          }
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(\frac{4^n}{\sqrt{n}})$ (Catalan number), Space: $O(N)$ recursion depth.
+  </details>
+
+---
+
+### Day 5: Midpoint Shift — The Monotonic Stack Pattern
+- **Step 1 (20 mins) | Focused Video**: [Monotonic Stack / Daily Temperatures](https://www.youtube.com/watch?v=cTBiBSnjO3c) by *NeetCode*
+  - Key focus: Why does a decreasing monotonic stack reveal the nearest warmer day in $O(1)$ amortized steps?
+- **Deep Practice (75 mins) | Problem 5**:
+  - [Daily Temperatures](https://leetcode.com/problems/daily-temperatures/) (NeetCode - Medium)
+  - Thinking prompts: Store indices in the stack. While incoming temperature is greater than `temperatures[stack.Peek()]`, pop index and calculate distance `i - prevIndex`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[] DailyTemperatures(int[] temperatures) {
+          int n = temperatures.Length;
+          int[] ans = new int[n];
+          Stack<int> stack = new(); // Stores indices of unresolved cooler days
+          
+          for (int i = 0; i < n; i++) {
+              while (stack.Count > 0 && temperatures[i] > temperatures[stack.Peek()]) {
+                  int prevIdx = stack.Pop();
+                  ans[prevIdx] = i - prevIdx;
+              }
+              stack.Push(i);
+          }
+          return ans;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$ amortized, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 6: Monotonic Stack on Rates of Change (Car Fleet)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Car Fleet, why do we sort cars by starting position in descending order?</b></summary>
+  <br>
+  <b>Answer:</b> A car behind can only catch up to a car ahead. Sorting from closest to destination backwards ensures we determine fleet leaders first. If a car behind arrives earlier or at the same time as the fleet ahead, it merges into that fleet.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 6**:
+  - [Car Fleet](https://leetcode.com/problems/car-fleet/) (NeetCode - Medium)
+  - Thinking prompts: Compute `time = (target - position) / (double)speed`. Maintain monotonic stack of arrival times.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int CarFleet(int target, int[] position, int[] speed) {
+          int n = position.Length;
+          (int pos, int spd)[] cars = new (int, int)[n];
+          for (int i = 0; i < n; i++) {
+              cars[i] = (position[i], speed[i]);
+          }
+          
+          // Sort descending by starting position
+          Array.Sort(cars, (a, b) => b.pos.CompareTo(a.pos));
+          
+          int fleets = 0;
+          double prevTime = 0.0;
+          
+          foreach (var car in cars) {
+              double time = (double)(target - car.pos) / car.spd;
+              if (time > prevTime) {
+                  fleets++;
+                  prevTime = time;
+              }
+          }
+          return fleets;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \log N)$ sorting, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 7: The Master Benchmark (Largest Rectangle in Histogram)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: When a bar is popped in Largest Rectangle in Histogram, what are its left and right boundaries?</b></summary>
+  <br>
+  <b>Answer:</b> The right boundary is the current index $i$ that caused the pop (first smaller bar on right). The left boundary is the index of the bar directly beneath it in the stack (first smaller bar on left).
+  </details>
+- **Deep Practice (75–85 mins) | Problem 7**:
+  - [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram/) (NeetCode - Hard)
+  - Thinking prompts: Draw histograms with decreasing heights. Trace how extending the width backwards using `start = poppedIndex` accounts for earlier taller bars.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int LargestRectangleArea(int[] heights) {
+          Stack<(int index, int height)> stack = new();
+          int maxArea = 0;
+          
+          for (int i = 0; i < heights.Length; i++) {
+              int start = i;
+              while (stack.Count > 0 && stack.Peek().height > heights[i]) {
+                  var (poppedIdx, poppedHeight) = stack.Pop();
+                  maxArea = Math.Max(maxArea, poppedHeight * (i - poppedIdx));
+                  start = poppedIdx; // Extend backwards
+              }
+              stack.Push((start, heights[i]));
+          }
+          
+          // Process remaining elements extending to end of array
+          int n = heights.Length;
+          while (stack.Count > 0) {
+              var (poppedIdx, poppedHeight) = stack.Pop();
+              maxArea = Math.Max(maxArea, poppedHeight * (n - poppedIdx));
+          }
+          return maxArea;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 8: Next Greater Element with Hash Mapping
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How do you bridge monotonic stack results across two arrays in Next Greater Element I?</b></summary>
+  <br>
+  <b>Answer:</b> Run monotonic stack on <code>nums2</code> to find the next greater element for every number, storing results in a <code>Dictionary&lt;int, int&gt;</code>. Then map <code>nums1</code> queries directly via the dictionary.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 8**:
+  - [Next Greater Element I](https://leetcode.com/problems/next-greater-element-i/) (LeetCode 496 - Easy)
+  - Thinking prompts: Precompute mappings using a monotonic stack on `nums2`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[] NextGreaterElement(int[] nums1, int[] nums2) {
+          Dictionary<int, int> nextGreater = new();
+          Stack<int> stack = new();
+          
+          foreach (int n in nums2) {
+              while (stack.Count > 0 && stack.Peek() < n) {
+                  nextGreater[stack.Pop()] = n;
+              }
+              stack.Push(n);
+          }
+          
+          int[] res = new int[nums1.Length];
+          for (int i = 0; i < nums1.Length; i++) {
+              res[i] = nextGreater.GetValueOrDefault(nums1[i], -1);
+          }
+          return res;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N + M)$, Space: $O(M)$.
+  </details>
+
+---
+
+### Day 9: Online Streaming Monotonic Aggregation (Stock Span)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In Stock Spanner, why can we compress popped days into an accumulated span count?</b></summary>
+  <br>
+  <b>Answer:</b> If today's price is higher than previous days, today's price will also be higher than all days covered by those previous days. We can merge their spans directly: <code>span += stack.Pop().span</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 9**:
+  - [Online Stock Span](https://leetcode.com/problems/online-stock-span/) (LeetCode 901 - Medium)
+  - Thinking prompts: Store `(int price, int span)` tuples in a decreasing monotonic stack.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class StockSpanner {
+      private readonly Stack<(int price, int span)> _stack;
+
+      public StockSpanner() {
+          _stack = new Stack<(int, int)>();
+      }
+      
+      public int Next(int price) {
+          int span = 1;
+          while (_stack.Count > 0 && _stack.Peek().price <= price) {
+              span += _stack.Pop().span;
+          }
+          _stack.Push((price, span));
+          return span;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(1)$ amortized per call, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 10: Stack Collision Simulation (Asteroid Collision)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: When do two asteroids collide?</b></summary>
+  <br>
+  <b>Answer:</b> Only when the asteroid on the left moves right (<code>top &gt; 0</code>) and the current asteroid moves left (<code>curr &lt; 0</code>). If both move the same direction or move away from each other (left moves left, right moves right), no collision occurs.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 10**:
+  - [Asteroid Collision](https://leetcode.com/problems/asteroid-collision/) (LeetCode 735 - Medium)
+  - Thinking prompts: Use a `bool alive` flag to track whether the incoming asteroid survives collisions with the stack.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[] AsteroidCollision(int[] asteroids) {
+          Stack<int> stack = new();
+          
+          foreach (int ast in asteroids) {
+              bool destroyed = false;
+              while (stack.Count > 0 && stack.Peek() > 0 && ast < 0) {
+                  int top = stack.Peek();
+                  if (top < -ast) {
+                      stack.Pop(); // Top explodes, incoming continues
+                  } else if (top == -ast) {
+                      stack.Pop(); // Both explode
+                      destroyed = true;
+                      break;
+                  } else {
+                      destroyed = true; // Incoming explodes
+                      break;
+                  }
+              }
+              if (!destroyed) {
+                  stack.Push(ast);
+              }
+          }
+          
+          int[] res = new int[stack.Count];
+          for (int i = res.Length - 1; i >= 0; i--) {
+              res[i] = stack.Pop();
+          }
+          return res;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 11: CSES & Competitive Benchmarks + Spaced Retrieval
+- **Benchmark 1**: [CSES: Nearest Smaller Values](https://cses.fi/problemset/task/1645) (Standard 1-based monotonic stack)
+- **Benchmark 2**: [CSES: Maximum Building I](https://cses.fi/problemset/task/1147) (Largest rectangle in 2D grid matrix)
+- **Benchmark 3**: [CSES: Towers](https://cses.fi/problemset/task/1073) (Greedy stack piles)
+- **Benchmark 4**: [Codeforces 520B - Two Buttons](https://codeforces.com/problemset/problem/520/B) (State search / reverse greedy)
+- **Benchmark 5**: [Codeforces 115A - Party](https://codeforces.com/problemset/problem/115/A) (Tree depth / stack evaluation)
+
+---
+
+### Spaced Retrieval Flashcards
 
 <details>
-<summary><strong>Prompt 1: What is a Monotonic Stack, and what specific problem archetype does it solve in $O(N)$ time instead of $O(N^2)$?</strong></summary>
-
-A Monotonic Stack is a stack whose elements are strictly monotonically increasing or monotonically decreasing from bottom to top.
-It is the optimal data structure for the **Next/Previous Greater/Smaller Element** archetype. Whenever we need to find the first element to the left or right that is larger or smaller than the current element, a monotonic stack eliminates redundant comparisons by popping elements that can no longer serve as an answer for any future query.
+<summary><b>Flashcard 1: What is the defining characteristic of problems solved by Monotonic Stacks?</b></summary>
+<br>
+Finding the "nearest element greater (or smaller) than $X$" to the left or right in an array in $O(N)$ total time.
 </details>
 
 <details>
-<summary><strong>Prompt 2: In Largest Rectangle in Histogram, when an element is popped from the stack, how are the left and right boundaries of its maximum rectangle determined?</strong></summary>
-
-Let the stack maintain indices of strictly increasing heights:
-- **Right Boundary**: When an incoming bar at index $i$ has height strictly less than the bar at stack top, index $i$ is the *first smaller bar to the right*. It acts as the right bounding fence for the popped bar.
-- **Left Boundary**: After popping index $p$, the *new* element at the top of the stack is the *first smaller bar to the left*. If the stack becomes empty, no bar to the left was smaller, so the left boundary extends all the way to index $-1$.
-- **Width**: $\text{width} = i - \text{stack\_top} - 1$.
+<summary><b>Flashcard 2: Why does an element popped from a monotonic stack never need to be inspected again?</b></summary>
+<br>
+Because the new incoming element is both "closer" and "better" (more extreme) for all subsequent future elements than the popped element could ever be.
 </details>
 
 <details>
-<summary><strong>Prompt 3: How does Min Stack achieve $O(1)$ retrieval of the minimum element without scanning the stack?</strong></summary>
-
-By maintaining either:
-1. An auxiliary `min_stack` where each entry is $\min(\text{current\_val}, \text{min\_stack[-1]})$.
-2. Storing pairs `(val, current_min)` on a single stack.
-Because LIFO order guarantees that an element popped was pushed after all elements below it, the minimum of the stack at any given depth never changes until that layer is popped.
+<summary><b>Flashcard 3: How can you iterate through a C# <code>Stack&lt;T&gt;</code> without destroying its contents?</b></summary>
+<br>
+Using a standard <code>foreach (var item in stack)</code> loop. In C#, <code>foreach</code> on a stack enumerates from top to bottom without popping elements.
 </details>
 
 ---
 
-## 2. YouTube Conceptual Anchor (25 Minutes)
+## 🎯 Topic Checklist (15 Problems)
 
-Recommended Video Anchors:
-1. **NeetCode**: [Largest Rectangle in Histogram Detailed Walkthrough](https://www.youtube.com/watch?v=zx5SwR13044) (15 mins)
-2. **Striver**: [Monotonic Stack / Next Greater Element Pattern](https://www.youtube.com/watch?v=Du881K7Jtk8) (18 mins)
-
-### Core Invariants & Mental Model
-1. **The Elimination Invariant**: If element $B$ comes after element $A$ and is taller/better than $A$, element $A$ will never be the "next greater" answer for any subsequent elements. $A$ is permanently dominated and can be discarded.
-2. **Sentinel Invariant in Histograms**: Adding a dummy height of $0$ at the end of the heights array forces all remaining elements on the stack to be resolved and popped without requiring separate cleanup code.
-3. **Amortized Analysis**: Every element is pushed onto the stack exactly once and popped at most once. Total push/pop operations $\le 2N$, proving $O(N)$ runtime.
-
----
-
-## 3. Canonical Code Templates
-
-### Pattern A: Next Greater Element (Monotonic Decreasing Stack — $O(N)$ Time)
-```python
-from typing import List
-
-def daily_temperatures(temperatures: List[int]) -> List[int]:
-    n = len(temperatures)
-    answer = [0] * n
-    stack = []  # Stores indices of temperatures in decreasing order
-    
-    for current_day, temp in enumerate(temperatures):
-        # Resolve any cooler days waiting on the stack
-        while stack and temperatures[stack[-1]] < temp:
-            prev_day = stack.pop()
-            answer[prev_day] = current_day - prev_day
-            
-        stack.append(current_day)
-        
-    return answer
-```
-
-### Pattern B: Largest Rectangle in Histogram ($O(N)$ Time, $O(N)$ Space)
-```python
-from typing import List
-
-def largest_rectangle_area(heights: List[int]) -> int:
-    stack = []  # Stores indices of strictly increasing heights
-    max_area = 0
-    # Append 0 sentinel to flush all remaining elements at the end
-    augmented_heights = heights + [0]
-    
-    for i, h in enumerate(augmented_heights):
-        while stack and augmented_heights[stack[-1]] > h:
-            popped_idx = stack.pop()
-            height = augmented_heights[popped_idx]
-            # If stack is empty, width extends from 0 to i
-            width = i if not stack else (i - stack[-1] - 1)
-            max_area = max(max_area, height * width)
-            
-        stack.append(i)
-        
-    return max_area
-```
+| Day | # | Problem | Platform | Difficulty | Status |
+|:---:|:---:|:---|:---:|:---:|:---:|
+| Day 1 | 1 | [Valid Parentheses](https://leetcode.com/problems/valid-parentheses/) | NeetCode | Easy | - [ ] |
+| Day 2 | 2 | [Min Stack](https://leetcode.com/problems/min-stack/) | NeetCode | Medium | - [ ] |
+| Day 3 | 3 | [Evaluate Reverse Polish Notation](https://leetcode.com/problems/evaluate-reverse-polish-notation/) | NeetCode | Medium | - [ ] |
+| Day 4 | 4 | [Generate Parentheses](https://leetcode.com/problems/generate-parentheses/) | NeetCode | Medium | - [ ] |
+| Day 5 | 5 | [Daily Temperatures](https://leetcode.com/problems/daily-temperatures/) | NeetCode | Medium | - [ ] |
+| Day 6 | 6 | [Car Fleet](https://leetcode.com/problems/car-fleet/) | NeetCode | Medium | - [ ] |
+| Day 7 | 7 | [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram/) | NeetCode | Hard | - [ ] |
+| Day 8 | 8 | [Next Greater Element I](https://leetcode.com/problems/next-greater-element-i/) | LeetCode | Easy | - [ ] |
+| Day 9 | 9 | [Online Stock Span](https://leetcode.com/problems/online-stock-span/) | LeetCode | Medium | - [ ] |
+| Day 10 | 10 | [Asteroid Collision](https://leetcode.com/problems/asteroid-collision/) | LeetCode | Medium | - [ ] |
+| Day 11 | 11 | [Nearest Smaller Values](https://cses.fi/problemset/task/1645) | CSES | Medium | - [ ] |
+| Day 11 | 12 | [Maximum Building I](https://cses.fi/problemset/task/1147) | CSES | Hard | - [ ] |
+| Day 11 | 13 | [Towers](https://cses.fi/problemset/task/1073) | CSES | Medium | - [ ] |
+| Day 11 | 14 | [Two Buttons (520B)](https://codeforces.com/problemset/problem/520/B) | Codeforces | Rating 1000 | - [ ] |
+| Day 11 | 15 | [Party (115A)](https://codeforces.com/problemset/problem/115/A) | Codeforces | Rating 900 | - [ ] |
 
 ---
 
-## 4. Coding Deep Dive: Worked Walkthrough (50 Minutes)
+[⬅️ Previous Topic: Sliding Window](03-sliding-window.md) | [Home](index.md) | [Next Topic: Binary Search & Answer Space ➡️](05-binary-search.md)
 
-### Problem: Largest Rectangle in Histogram (LeetCode 84)
-**Problem Statement**: Given an array of integers `heights` representing the histogram's bar height where the width of each bar is 1, return the area of the largest rectangle in the histogram.
-
-#### Pen-and-Paper Dry Run Trace
-Let `heights = [2, 1, 5, 6, 2, 3]`.
-With sentinel: `[2, 1, 5, 6, 2, 3, 0]`.
-
-| Step `i` | Height `h` | Stack State (Indices) | Action / Popped Index | Height $\times$ Width Calculation | Max Area |
-|:---:|:---:|:---:|:---|:---|:---:|
-| 0 | 2 | `[0]` | Push 0 | - | 0 |
-| 1 | 1 | `[]` $\to$ `[1]` | Pop 0 (H=2) | $\text{width} = 1 - (-1) - 1 = 1 \implies 2 \times 1 = 2$ | 2 |
-| 2 | 5 | `[1, 2]` | Push 2 | - | 2 |
-| 3 | 6 | `[1, 2, 3]` | Push 3 | - | 2 |
-| 4 | 2 | `[1, 2]` | Pop 3 (H=6) | $\text{width} = 4 - 2 - 1 = 1 \implies 6 \times 1 = 6$ | 6 |
-| - | 2 | `[1]` | Pop 2 (H=5) | $\text{width} = 4 - 1 - 1 = 2 \implies 5 \times 2 = 10$ | **10** |
-| - | 2 | `[1, 4]` | Push 4 | - | 10 |
-| 5 | 3 | `[1, 4, 5]` | Push 5 | - | 10 |
-| 6 | 0 | `[1, 4]` | Pop 5 (H=3) | $\text{width} = 6 - 4 - 1 = 1 \implies 3 \times 1 = 3$ | 10 |
-| - | 0 | `[1]` | Pop 4 (H=2) | $\text{width} = 6 - 1 - 1 = 4 \implies 2 \times 4 = 8$ | 10 |
-| - | 0 | `[]` | Pop 1 (H=1) | $\text{width} = 6 \implies 1 \times 6 = 6$ | 10 |
-
-Maximum Area Recorded: **10** (formed by heights 5 and 6 at indices 2 and 3).
-Time Complexity: $O(N)$ since each index is pushed and popped at most once.
-Space Complexity: $O(N)$ for the monotonic stack.
-
----
-
-## 5. Curated Problem Set (15 Problems)
-
-Track your daily solutions by checking off the markdown boxes.
-
-### NeetCode / LeetCode (Core)
-- [ ] [LeetCode 20: Valid Parentheses](https://leetcode.com/problems/valid-parentheses/) | Easy | Bracket Matching LIFO Invariant
-- [ ] [LeetCode 155: Min Stack](https://leetcode.com/problems/min-stack/) | Medium | Dual Stack / Tuple State Tracking
-- [ ] [LeetCode 150: Evaluate Reverse Polish Notation](https://leetcode.com/problems/evaluate-reverse-polish-notation/) | Medium | Postfix Operator Stack Evaluation
-- [ ] [LeetCode 739: Daily Temperatures](https://leetcode.com/problems/daily-temperatures/) | Medium | Monotonic Decreasing Stack Distance
-- [ ] [LeetCode 853: Car Fleet](https://leetcode.com/problems/car-fleet/) | Medium | Arrival Time Monotonic Stack
-- [ ] [LeetCode 84: Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram/) | Hard | Monotonic Increasing Stack Bounding
-- [ ] [LeetCode 85: Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle/) | Hard | 2D Grid Histogram Reduction
-- [ ] [LeetCode 503: Next Greater Element II](https://leetcode.com/problems/next-greater-element-ii/) | Medium | Circular Array Double-Pass Stack
-- [ ] [LeetCode 402: Remove K Digits](https://leetcode.com/problems/remove-k-digits/) | Medium | Greedy Monotonic Stack String Construction
-- [ ] [LeetCode 901: Online Stock Span](https://leetcode.com/problems/online-stock-span/) | Medium | Monotonic Stack Pair Aggregation
-
-### CSES Problem Set (Free Tier, No Login Wall)
-- [ ] [CSES 1645: Nearest Smaller Values](https://cses.fi/problemset/task/1645) | Sorting & Searching | Monotonic Stack for Previous Smaller Element
-- [ ] [CSES 1145: Increasing Subsequence](https://cses.fi/problemset/task/1145) | Dynamic Programming | Monotonic Tails / Patience Sorting
-- [ ] [CSES 1644: Maximum Subarray Sum II](https://cses.fi/problemset/task/1644) | Sorting & Searching | Monotonic Deque over Bounded Prefix Sums
-
-### Codeforces & AtCoder (Rating 800–1400)
-- [ ] [Codeforces 158C: Cd and pwd commands](https://codeforces.com/problemset/problem/158/C) | 1200 | Filesystem Path Simulation with Stack
-- [ ] [Codeforces 5C: Longest Regular Bracket Sequence](https://codeforces.com/problemset/problem/5/C) | 1900 | Index-Based Stack for Longest Balanced Substring
-
----
-
-## 6. Post-Session Active Recall Flashcards (15 Minutes)
-
-<details>
-<summary><strong>Flashcard 1: Why does a circular array for Next Greater Element II only require iterating up to $2N - 1$?</strong></summary>
-
-Any element in a circular array can look at most $N-1$ elements ahead before wrapping around to itself. By simulating an array of length $2N$ using `i % N`, we give every element a full $N-1$ window to locate its next greater element without copying the physical array.
-</details>
-
-<details>
-<summary><strong>Flashcard 2: In Remove K Digits, what condition causes a digit to be popped from the stack?</strong></summary>
-
-A digit at the top of the stack is popped if the current digit is strictly smaller (`stack[-1] > digit`) and we still have removals available (`k > 0`). This greedily minimizes the most significant digits first.
-</details>
-
-<details>
-<summary><strong>Flashcard 3: How does Maximal Rectangle (LeetCode 85) reduce a 2D binary matrix into multiple histogram problems?</strong></summary>
-
-Iterate row by row. Maintain an array `heights` of size $M$ (number of columns). For each row:
-- If `matrix[row][col] == '1'`, `heights[col] += 1`.
-- If `matrix[row][col] == '0'`, `heights[col] = 0` (reset because continuity is broken).
-Run the $O(M)$ `largest_rectangle_area` on `heights`. Repeating this for all $N$ rows yields an $O(N \times M)$ solution.
-</details>
-
----
-
-[← Topic 03: Sliding Window](03-sliding-window.md) \| [Next Topic: Binary Search →](05-binary-search.md)

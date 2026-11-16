@@ -1,193 +1,479 @@
 ---
-layout: default
-title: "Topic 01: Arrays, Hashing & Frequency Counting"
+layout: page
+title: "Arrays, Hashing & Frequency Counting"
+permalink: /arrays-and-hashing/
 ---
 
-# Topic 01: Arrays, Hashing & Frequency Counting
+# Arrays, Hashing & Frequency Counting
 
-[← Home](index.md) \| [Schedule](schedule.md) \| [Next: Two Pointers →](02-two-pointers.md)
-
----
-
-## Daily Timeboxing (1.5 – 2.0 Hours)
-- **00:00 – 00:15 (15m) | Active Recall Pre-Test**: Answer the conceptual questions below before reading further.
-- **00:15 – 00:40 (25m) | YouTube Conceptual Anchor**: Watch the recommended video segment on hash collisions and prefix states.
-- **00:40 – 01:30 (50m) | Coding Deep Dive**: Dry run on paper first, then implement Two Sum & Subarray Sum Equals K.
-- **01:30 – 01:45 (15m) | Post-Session Flashcards**: Self-test using the retrieval cards at the bottom.
+> **Estimated Time**: 11 Days • **Pace**: 1.5–2 hours/day (Strictly 1 problem/day) • **Language**: C# (.NET 6+)
 
 ---
 
-## 1. Active Recall Pre-Test (15 Minutes)
-Attempt to answer these questions on paper before expanding the solutions.
+## 🛠️ C# Mental Model & Gotchas
+
+### 1. Hash Lookup Internals & Performance
+In .NET, `Dictionary<TKey, TValue>` and `HashSet<T>` use open addressing with collision chaining via prime-sized bucket arrays.
+- **Double Lookups**: Avoid calling `map.ContainsKey(key)` followed immediately by `map[key]`. In tight loops, this doubles the hashing overhead. Use `map.TryGetValue(key, out var val)`.
+- **Custom Keys**: If using custom structs or classes as keys, always implement `IEquatable<T>` and override `GetHashCode()`. For multi-field composite keys, use C# `ValueTuple` (e.g. `(int row, int col)`), which generates high-quality value-based hash codes automatically.
+- **Pre-sizing**: Avoid frequent table resizing and rehashing when the element count $N$ is known upfront. Always pass capacity: `new Dictionary<int, int>(nums.Length)`.
+
+### 2. Frequency Tables: Fixed ASCII Arrays vs Dictionaries
+When counting character frequencies in strings consisting only of lowercase English letters (`'a'`–`'z'`), **do not use `Dictionary<char, int>`**. A fixed-size array `int[] count = new int[26]` is cache-friendly, requires zero heap allocations per entry, and offers instantaneous $O(1)$ direct indexing: `count[c - 'a']++`.
+
+### 3. Avoiding LINQ in Inner Loops
+LINQ methods like `.Select()`, `.GroupBy()`, and `.Sum()` allocate enumerator objects on the managed heap. For LeetCode / competitive programming hot loops, write standard `for` or `foreach` loops.
+
+---
+
+## 📅 Day-by-Day Schedule
+
+### Day 1: Theory Anchor & Baseline Pattern
+- **Step 1 (45 mins) | Concept Video**: [Hash Tables and Hash Functions](https://www.youtube.com/watch?v=shs0KM3wKv8) by *Abdul Bari*
+  - Key focus: What is a hash collision? How do load factors, open addressing, and chaining impact $O(1)$ average time complexity?
+- **Step 2 (20 mins) | Pen & Paper Invariant**:
+  - Sketch a hash table with bucket array of size 7. Insert keys `12, 19, 26` with $h(k) = k \pmod 7$. Draw the collision chain.
+- **Step 3 (45 mins) | Problem 1 (Warm-Up)**:
+  - [Contains Duplicate](https://leetcode.com/problems/contains-duplicate/) (NeetCode - Easy)
+  - Objective: Implement in C# using `HashSet<int>`. Verify early exit condition.
+- **Step 4 (10 mins) | Active Recall**:
+  <details>
+  <summary><b>🧠 Self-Test: What is the worst-case time complexity of a hash set insertion, and why does it occur?</b></summary>
+  <br>
+  <b>Answer:</b> $O(N)$ worst-case. This occurs when all inserted elements produce identical hash codes (hash collision catastrophe) or the hash table exceeds its load factor and must allocate a new prime-sized backing array and rehash every element.
+  </details>
+
+---
+
+### Day 2: Core Pattern Consolidation (Two-Sum Complement Technique)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why is checking <code>map.ContainsKey(k)</code> followed by <code>map[k]</code> suboptimal in C#?</b></summary>
+  <br>
+  <b>Answer:</b> It evaluates the hash function and traverses the bucket chain twice. Using <code>map.TryGetValue(k, out var val)</code> achieves the same lookup in a single hash computation and bucket lookup.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 2**:
+  - [Two Sum](https://leetcode.com/problems/two-sum/) (NeetCode - Easy)
+  - Thinking prompts: Instead of comparing every pair $O(N^2)$, maintain an invariant: at index $i$, the dictionary holds all values seen prior to $i$. Query target complement $T - nums[i]$.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[] TwoSum(int[] nums, int target) {
+          // Map value -> index seen so far
+          Dictionary<int, int> seen = new(nums.Length);
+          
+          for (int i = 0; i < nums.Length; i++) {
+              int complement = target - nums[i];
+              if (seen.TryGetValue(complement, out int complementIndex)) {
+                  return new int[] { complementIndex, i };
+              }
+              // Store current number with its index
+              seen[nums[i]] = i;
+          }
+          
+          return Array.Empty<int>();
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$ single pass, Space: $O(N)$ auxiliary hash map.
+  </details>
+
+---
+
+### Day 3: Character Frequency Arrays & Canonical Keys
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: When an input string is guaranteed to be lowercase English letters, what data structure should you use instead of <code>Dictionary&lt;char, int&gt;</code>?</b></summary>
+  <br>
+  <b>Answer:</b> A fixed-size array <code>int[26]</code>. It avoids heap object allocation, provides cache locality, and uses direct indexing <code>c - 'a'</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 3**:
+  - [Valid Anagram](https://leetcode.com/problems/valid-anagram/) (NeetCode - Easy)
+  - Thinking prompts: An anagram is an invariant of character counts. Can you solve it with a single array of size 26 by incrementing for string $S$ and decrementing for string $T$?
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public bool IsAnagram(string s, string t) {
+          if (s.Length != t.Length) return false;
+          
+          int[] freq = new int[26];
+          for (int i = 0; i < s.Length; i++) {
+              freq[s[i] - 'a']++;
+              freq[t[i] - 'a']--;
+          }
+          
+          for (int i = 0; i < 26; i++) {
+              if (freq[i] != 0) return false;
+          }
+          return true;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$ fixed 26-element array.
+  </details>
+
+---
+
+### Day 4: Equivalence Class Hashing
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How can two anagrams produce an identical key in a dictionary?</b></summary>
+  <br>
+  <b>Answer:</b> Either by sorting the characters ($O(K \log K)$ where $K$ is string length) or by serializing their 26-element frequency signature into a string (e.g. <code>#1#0#2...</code> in $O(K)$ time).
+  </details>
+- **Deep Practice (75–85 mins) | Problem 4**:
+  - [Group Anagrams](https://leetcode.com/problems/group-anagrams/) (NeetCode - Medium)
+  - Thinking prompts: What represents the canonical equivalence class? Compare string sorting vs character frequency serialization.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public IList<IList<string>> GroupAnagrams(string[] strs) {
+          Dictionary<string, List<string>> groups = new();
+          
+          foreach (string s in strs) {
+              char[] chars = s.ToCharArray();
+              Array.Sort(chars);
+              string key = new string(chars);
+              
+              if (!groups.TryGetValue(key, out var list)) {
+                  list = new List<string>();
+                  groups[key] = list;
+              }
+              list.Add(s);
+          }
+          
+          return groups.Values.Cast<IList<string>>().ToList();
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N \cdot K \log K)$ where $N$ is word count and $K$ is maximum word length. Space: $O(N \cdot K)$.
+  </details>
+
+---
+
+### Day 5: Bucket Sort vs Heap for Top-K Elements
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why is Bucket Sort able to find Top-K frequent elements in $O(N)$ time whereas a heap takes $O(N \log K)$?</b></summary>
+  <br>
+  <b>Answer:</b> The maximum possible frequency of any element in an array of size $N$ is strictly bounded by $N$. Thus, we can create an array of buckets where index $f$ stores all numbers that appear with frequency $f$.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 5**:
+  - [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) (NeetCode - Medium)
+  - Thinking prompts: First count frequencies into a `Dictionary<int, int>`. Then build `List<int>[] buckets = new List<int>[nums.Length + 1]`. Scan from the highest bucket downwards.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[] TopKFrequent(int[] nums, int k) {
+          Dictionary<int, int> count = new();
+          foreach (int n in nums) {
+              count[n] = count.GetValueOrDefault(n, 0) + 1;
+          }
+          
+          List<int>[] buckets = new List<int>[nums.Length + 1];
+          foreach (var kvp in count) {
+              int freq = kvp.Value;
+              buckets[freq] ??= new List<int>();
+              buckets[freq].Add(kvp.Key);
+          }
+          
+          int[] result = new int[k];
+          int idx = 0;
+          for (int f = buckets.Length - 1; f >= 0 && idx < k; f--) {
+              if (buckets[f] != null) {
+                  foreach (int val in buckets[f]) {
+                      result[idx++] = val;
+                      if (idx == k) break;
+                  }
+              }
+          }
+          return result;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 6: Prefix & Suffix Products Without Division
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: If division was allowed, <code>Product of Array Except Self</code> would be trivial. Why is division problematic when handling zeros?</b></summary>
+  <br>
+  <b>Answer:</b> A single zero causes division by zero exceptions; multiple zeros mean every product except self is zero.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 6**:
+  - [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) (NeetCode - Medium)
+  - Thinking prompts: Any product of array except index $i$ is equal to $(\text{prefix product before } i) \times (\text{suffix product after } i)$. Compute prefix in the output array, then accumulate suffix product with a single running integer variable.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int[] ProductExceptSelf(int[] nums) {
+          int n = nums.Length;
+          int[] res = new int[n];
+          
+          // Pass 1: compute prefix products
+          res[0] = 1;
+          for (int i = 1; i < n; i++) {
+              res[i] = res[i - 1] * nums[i - 1];
+          }
+          
+          // Pass 2: accumulate suffix products
+          int suffix = 1;
+          for (int i = n - 1; i >= 0; i--) {
+              res[i] *= suffix;
+              suffix *= nums[i];
+          }
+          
+          return res;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(1)$ auxiliary (excluding the output array).
+  </details>
+
+---
+
+### Day 7: Grid Invariants & Bitmasks / Sets
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How can a $9 \times 9$ Sudoku sub-box index $(0 \dots 8)$ be calculated from row $r$ and column $c$?</b></summary>
+  <br>
+  <b>Answer:</b> <code>(r / 3) * 3 + (c / 3)</code>.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 7**:
+  - [Valid Sudoku](https://leetcode.com/problems/valid-sudoku/) (NeetCode - Medium)
+  - Thinking prompts: Can you track seen digits using integer bitmasks (`int[9] rows`, `int[9] cols`, `int[9] boxes`) where the $d$-th bit indicates whether digit $d$ has been encountered?
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public bool IsValidSudoku(char[][] board) {
+          int[] rows = new int[9];
+          int[] cols = new int[9];
+          int[] boxes = new int[9];
+          
+          for (int r = 0; r < 9; r++) {
+              for (int c = 0; c < 9; c++) {
+                  char ch = board[r][c];
+                  if (ch == '.') continue;
+                  
+                  int digit = ch - '1'; // 0 to 8
+                  int mask = 1 << digit;
+                  int boxIdx = (r / 3) * 3 + (c / 3);
+                  
+                  if ((rows[r] & mask) != 0 || (cols[c] & mask) != 0 || (boxes[boxIdx] & mask) != 0) {
+                      return false;
+                  }
+                  
+                  rows[r] |= mask;
+                  cols[c] |= mask;
+                  boxes[boxIdx] |= mask;
+              }
+          }
+          return true;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(1)$ (bounded $9 \times 9 = 81$ cells), Space: $O(1)$ using integer bitmasks.
+  </details>
+
+---
+
+### Day 8: String Framing Protocols (Length Prefixes)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: Why is using a single delimiter like <code>,</code> or <code>#</code> flawed when serializing arbitrary strings?</b></summary>
+  <br>
+  <b>Answer:</b> If the string itself contains the delimiter, decoding becomes ambiguous. A robust framing protocol encodes the length followed by a separator (e.g. <code>4#lint4#code</code>).
+  </details>
+- **Deep Practice (75–85 mins) | Problem 8**:
+  - [Encode and Decode Strings](https://leetcode.com/problems/encode-and-decode-strings/) (NeetCode - Medium)
+  - Thinking prompts: Encode strings as `[length]#[string]`. During decoding, read digits until `#`, parse length $L$, slice the next $L$ characters, and advance pointer.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Codec {
+      public string encode(IList<string> strs) {
+          var sb = new System.Text.StringBuilder();
+          foreach (var s in strs) {
+              sb.Append(s.Length).Append('#').Append(s);
+          }
+          return sb.ToString();
+      }
+
+      public IList<string> decode(string s) {
+          List<string> result = new();
+          int i = 0;
+          while (i < s.Length) {
+              int delim = s.IndexOf('#', i);
+              int len = int.Parse(s.Substring(i, delim - i));
+              i = delim + 1;
+              result.Add(s.Substring(i, len));
+              i += len;
+          }
+          return result;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$ for both encode and decode. Space: $O(1)$ auxiliary.
+  </details>
+
+---
+
+### Day 9: Sequence Invariants in Unsorted Arrays
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: In <code>Longest Consecutive Sequence</code>, how do we guarantee each streak is traversed only once in $O(N)$ time instead of $O(N^2)$?</b></summary>
+  <br>
+  <b>Answer:</b> Only start counting a sequence from $x$ if $x - 1$ is NOT in the hash set. This ensures $x$ is the strictly designated beginning of a streak.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 9**:
+  - [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/) (NeetCode - Medium)
+  - Thinking prompts: Insert all numbers into `HashSet<int>`. Iterate through the set. If `!set.Contains(num - 1)`, initiate an upward streak probe `num + 1, num + 2, ...`.
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int LongestConsecutive(int[] nums) {
+          HashSet<int> numSet = new(nums);
+          int longest = 0;
+          
+          foreach (int n in numSet) {
+              // Check if n is the start of a streak
+              if (!numSet.Contains(n - 1)) {
+                  int currentNum = n;
+                  int currentStreak = 1;
+                  
+                  while (numSet.Contains(currentNum + 1)) {
+                      currentNum++;
+                      currentStreak++;
+                  }
+                  longest = Math.Max(longest, currentStreak);
+              }
+          }
+          return longest;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$ (each element visited at most twice), Space: $O(N)$.
+  </details>
+
+---
+
+### Day 10: Prefix Sum Frequencies (Subarray Sums Equals K)
+- **Warm-Up (10 mins)**:
+  <details>
+  <summary><b>🧠 Quick Recall: How does prefix sum transform a range sum query $nums[i \dots j] = K$ into a two-sum complement lookup?</b></summary>
+  <br>
+  <b>Answer:</b> Since $\text{sum}(i \dots j) = \text{prefix}[j] - \text{prefix}[i - 1] = K$, we can rearrange this to $\text{prefix}[i - 1] = \text{prefix}[j] - K$. We store prefix sum frequencies in a hash map as we iterate.
+  </details>
+- **Deep Practice (75–85 mins) | Problem 10**:
+  - [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/) (LeetCode 560 - Medium)
+  - Thinking prompts: Remember base case `map[0] = 1` before starting the loop (representing an empty prefix before index 0).
+- **Reference Solution**:
+  <details>
+  <summary><b>View Optimal C# Solution & Complexity</b></summary>
+
+  ```csharp
+  public class Solution {
+      public int SubarraySum(int[] nums, int k) {
+          Dictionary<int, int> prefixFreq = new();
+          prefixFreq[0] = 1; // Base case for subarrays starting at index 0
+          
+          int currentSum = 0;
+          int count = 0;
+          
+          foreach (int n in nums) {
+              currentSum += n;
+              if (prefixFreq.TryGetValue(currentSum - k, out int freq)) {
+                  count += freq;
+              }
+              prefixFreq[currentSum] = prefixFreq.GetValueOrDefault(currentSum, 0) + 1;
+          }
+          return count;
+      }
+  }
+  ```
+  <b>Complexity:</b> Time: $O(N)$, Space: $O(N)$.
+  </details>
+
+---
+
+### Day 11: CSES & Competitive Benchmarks + Spaced Retrieval
+- **Benchmark 1**: [CSES: Distinct Numbers](https://cses.fi/problemset/task/1621) (Testing raw sorting vs hash set throughput)
+- **Benchmark 2**: [CSES: Maximum Subarray Sum](https://cses.fi/problemset/task/1643) (Kadane's algorithm / prefix minimums)
+- **Benchmark 3**: [CSES: Subarray Sums I](https://cses.fi/problemset/task/1660) (Prefix sums on non-negative array)
+- **Benchmark 4**: [Codeforces 4A - Watermelon](https://codeforces.com/problemset/problem/4/A) (Parity check)
+- **Benchmark 5**: [Codeforces 1335C - Two Teams Composing](https://codeforces.com/problemset/problem/1335/C) (Frequency table vs distinct counts)
+
+---
+
+### Spaced Retrieval Flashcards
 
 <details>
-<summary><strong>Prompt 1: What is the underlying data structure of a Hash Map, and how are collisions resolved?</strong></summary>
-
-A hash map is backed by a contiguous fixed-size array (buckets). A hash function maps an arbitrary key to an integer bucket index: `index = hash(key) % capacity`.
-Collisions (two keys mapping to the same bucket) are typically resolved via:
-1. **Separate Chaining**: Each bucket stores a linked list (or balanced red-black tree when chain length exceeds a threshold, as in Java 8+ HashMap). Worst-case lookup degrades to $O(N)$ or $O(\log N)$, but amortized lookup is $O(1)$ under uniform hashing and a load factor $\alpha = N / \text{capacity} \le 0.75$.
-2. **Open Addressing** (Linear/Quadratic Probing, Double Hashing): All entries live in the array itself. When a collision occurs, subsequent slots are probed until an empty cell is found. Requires careful tombstone marking on deletions.
+<summary><b>Flashcard 1: When should you use a frequency array <code>int[26]</code> over <code>Dictionary&lt;char, int&gt;</code> in C#?</b></summary>
+<br>
+When the domain of characters is strictly bounded (e.g. lowercase English letters <code>'a'..'z'</code>). A direct array eliminates heap allocations, reduces garbage collection pressure, and leverages CPU cache line locality.
 </details>
 
 <details>
-<summary><strong>Prompt 2: In the classic Two Sum problem, why does checking `target - num in seen` work in $O(N)$ time instead of $O(N^2)$?</strong></summary>
-
-In the naive nested loop approach, for every element $x$, we scan the rest of the array ($N-1$ elements) to find $y$ such that $x + y = \text{target}$. 
-By maintaining a hash map of elements visited so far, checking if the complementary value $y = \text{target} - x$ exists requires only an $O(1)$ hash table lookup. Because each element is inserted and checked exactly once, the entire array is processed in a single pass of $O(N)$ time and $O(N)$ auxiliary space.
+<summary><b>Flashcard 2: Why must <code>prefixFreq[0] = 1</code> be initialized when counting subarrays with sum equal to $K$?</b></summary>
+<br>
+Because if the running prefix sum itself equals $K$, the expression $\text{currentSum} - K$ evaluates to $0$. An initial count of 1 for prefix sum 0 accounts for valid subarrays starting exactly from index 0.
 </details>
 
 <details>
-<summary><strong>Prompt 3: What invariant makes Prefix Sums ideal for answering range sum queries in $O(1)$ time?</strong></summary>
-
-Given an array $A$ of length $N$, the prefix sum array $P$ is defined as:
-$$P[i] = \sum_{k=0}^{i-1} A[k], \quad P[0] = 0$$
-The sum of any contiguous slice $A[L \dots R]$ (0-indexed, inclusive) can be computed directly as:
-$$\text{Sum}(L, R) = P[R + 1] - P[L]$$
-This transforms any range sum query from an $O(N)$ linear accumulation into an $O(1)$ arithmetic subtraction.
+<summary><b>Flashcard 3: How does C# handle equality comparison for composite keys in a <code>Dictionary</code>?</b></summary>
+<br>
+If using a custom class without overriding <code>Equals()</code> and <code>GetHashCode()</code>, reference equality is used, causing lookups with new instances to fail. Using <code>ValueTuple</code> (e.g. <code>(int, int)</code>) or C# 9+ <code>record struct</code> provides automatic value-based equality and hashing.
 </details>
 
 ---
 
-## 2. YouTube Conceptual Anchor (25 Minutes)
+## 🎯 Topic Checklist (15 Problems)
 
-Recommended Video Anchors:
-1. **NeetCode**: [Arrays & Hashing Playlist / Two Sum Deep Dive](https://www.youtube.com/watch?v=KLlXCFG5TnA) (10 mins)
-2. **Abdul Bari**: [Hashing Techniques & Collision Resolution](https://www.youtube.com/watch?v=mFY0J5W8Udk) (18 mins)
-
-### Core Invariants & Mental Model
-1. **Complement Lookback Invariant**: As we iterate index $i$ from $0 \dots N-1$, our hash map contains exactly the state of elements from indices $0 \dots i-1$. We inspect the past before recording the present.
-2. **Prefix Remainder / Running State Invariant**: For problems like *Subarray Sum Equals K*, we maintain a running sum $S_i$. A subarray ending at $i$ with sum $K$ exists if and only if there was a previous prefix sum $S_j = S_i - K$ with $j < i$.
-3. **Bucket Sort Invariant ($O(N)$ frequency sorting)**: When finding the top $K$ frequent elements among $N$ items, the maximum frequency cannot exceed $N$. Instead of sorting with a min-heap ($O(N \log K)$) or full sort ($O(N \log N)$), we use array indices $0 \dots N$ as frequency buckets for true linear time.
-
----
-
-## 3. Canonical Code Templates
-
-### Pattern A: Complement Hash Map Lookup ($O(N)$ Time, $O(N)$ Space)
-```python
-from typing import List, Dict
-
-def two_sum(nums: List[int], target: int) -> List[int]:
-    # Invariant: seen_indices maps value -> index for all visited elements
-    seen_indices: Dict[int, int] = {}
-    
-    for current_idx, num in enumerate(nums):
-        complement = target - num
-        if complement in seen_indices:
-            return [seen_indices[complement], current_idx]
-        seen_indices[num] = current_idx
-        
-    return []
-```
-
-### Pattern B: Prefix Sum with Frequency Hash Map ($O(N)$ Time, $O(N)$ Space)
-```python
-from typing import List
-from collections import defaultdict
-
-def subarray_sum(nums: List[int], k: int) -> int:
-    # Invariant: prefix_counts stores the frequency of running prefix sums
-    # Base case: A prefix sum of 0 has occurred once before processing any elements
-    prefix_counts = defaultdict(int)
-    prefix_counts[0] = 1
-    
-    running_sum = 0
-    total_subarrays = 0
-    
-    for num in nums:
-        running_sum += num
-        # If (running_sum - k) was seen before, each instance forms a valid subarray ending here
-        target_prefix = running_sum - k
-        if target_prefix in prefix_counts:
-            total_subarrays += prefix_counts[target_prefix]
-            
-        prefix_counts[running_sum] += 1
-        
-    return total_subarrays
-```
+| Day | # | Problem | Platform | Difficulty | Status |
+|:---:|:---:|:---|:---:|:---:|:---:|
+| Day 1 | 1 | [Contains Duplicate](https://leetcode.com/problems/contains-duplicate/) | NeetCode | Easy | - [ ] |
+| Day 2 | 2 | [Two Sum](https://leetcode.com/problems/two-sum/) | NeetCode | Easy | - [ ] |
+| Day 3 | 3 | [Valid Anagram](https://leetcode.com/problems/valid-anagram/) | NeetCode | Easy | - [ ] |
+| Day 4 | 4 | [Group Anagrams](https://leetcode.com/problems/group-anagrams/) | NeetCode | Medium | - [ ] |
+| Day 5 | 5 | [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | NeetCode | Medium | - [ ] |
+| Day 6 | 6 | [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) | NeetCode | Medium | - [ ] |
+| Day 7 | 7 | [Valid Sudoku](https://leetcode.com/problems/valid-sudoku/) | NeetCode | Medium | - [ ] |
+| Day 8 | 8 | [Encode and Decode Strings](https://leetcode.com/problems/encode-and-decode-strings/) | NeetCode | Medium | - [ ] |
+| Day 9 | 9 | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/) | NeetCode | Medium | - [ ] |
+| Day 10 | 10 | [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/) | LeetCode | Medium | - [ ] |
+| Day 11 | 11 | [Distinct Numbers](https://cses.fi/problemset/task/1621) | CSES | Easy | - [ ] |
+| Day 11 | 12 | [Maximum Subarray Sum](https://cses.fi/problemset/task/1643) | CSES | Medium | - [ ] |
+| Day 11 | 13 | [Subarray Sums I](https://cses.fi/problemset/task/1660) | CSES | Medium | - [ ] |
+| Day 11 | 14 | [Watermelon (4A)](https://codeforces.com/problemset/problem/4/A) | Codeforces | Rating 800 | - [ ] |
+| Day 11 | 15 | [Two Teams Composing (1335C)](https://codeforces.com/problemset/problem/1335/C) | Codeforces | Rating 1000 | - [ ] |
 
 ---
 
-## 4. Coding Deep Dive: Worked Walkthrough (50 Minutes)
+[Home](index.md) | [Next Topic: Two Pointers ➡️](02-two-pointers.md)
 
-### Problem: Subarray Sum Equals K (LeetCode 560)
-**Problem Statement**: Given an integer array `nums` and an integer `k`, return the total number of subarrays whose sum equals `k`.
-
-#### Pen-and-Paper Dry Run Trace
-Let `nums = [1, -1, 1, 1, 1, -1]`, `k = 2`.
-Initial state: `running_sum = 0`, `prefix_counts = {0: 1}`, `total = 0`.
-
-| Step | `num` | `running_sum` | `target_prefix = running_sum - 2` | In `prefix_counts`? | Updated `total` | `prefix_counts` state |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---|
-| Init | - | 0 | - | - | 0 | `{0: 1}` |
-| 1 | 1 | 1 | -1 | No | 0 | `{0: 1, 1: 1}` |
-| 2 | -1 | 0 | -2 | No | 0 | `{0: 2, 1: 1}` |
-| 3 | 1 | 1 | -1 | No | 0 | `{0: 2, 1: 2}` |
-| 4 | 1 | 2 | 0 | **Yes (count = 2)** | **0 + 2 = 2** | `{0: 2, 1: 2, 2: 1}` |
-| 5 | 1 | 3 | 1 | **Yes (count = 2)** | **2 + 2 = 4** | `{0: 2, 1: 2, 2: 1, 3: 1}` |
-| 6 | -1 | 2 | 0 | **Yes (count = 2)** | **4 + 2 = 6** | `{0: 2, 1: 2, 2: 2, 3: 1}` |
-
-Total valid subarrays = **6**.
-Time Complexity: $O(N)$ single pass.
-Space Complexity: $O(N)$ for prefix hash table.
-
----
-
-## 5. Curated Problem Set (16 Problems)
-
-Track your daily solutions by checking off the markdown boxes.
-
-### NeetCode / LeetCode (Core)
-- [ ] [LeetCode 217: Contains Duplicate](https://leetcode.com/problems/contains-duplicate/) | Easy | Set Membership & Uniqueness
-- [ ] [LeetCode 242: Valid Anagram](https://leetcode.com/problems/valid-anagram/) | Easy | Frequency Array / Counter
-- [ ] [LeetCode 1: Two Sum](https://leetcode.com/problems/two-sum/) | Easy | Complement Hash Map
-- [ ] [LeetCode 49: Group Anagrams](https://leetcode.com/problems/group-anagrams/) | Medium | Key Canonicalization (Tuple / Sort)
-- [ ] [LeetCode 347: Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | Medium | Bucket Sort / Min-Heap
-- [ ] [LeetCode 238: Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) | Medium | Prefix & Suffix Products
-- [ ] [LeetCode 36: Valid Sudoku](https://leetcode.com/problems/valid-sudoku/) | Medium | Bitmask / Subgrid Hash Set
-- [ ] [LeetCode 128: Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/) | Medium | Set Sequence Start Detection
-- [ ] [LeetCode 560: Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/) | Medium | Prefix Sum + Frequency Map
-- [ ] [LeetCode 271: Encode and Decode Strings](https://leetcode.com/problems/encode-and-decode-strings/) | Medium | Length Delimiter Protocol
-
-### CSES Problem Set (Free Tier, No Login Wall)
-- [ ] [CSES 1621: Distinct Numbers](https://cses.fi/problemset/task/1621) | Sorting & Searching | Unique Value Counting
-- [ ] [CSES 1660: Subarray Sums I](https://cses.fi/problemset/task/1660) | Prefix Sums | Positive Array Subarray Sum
-- [ ] [CSES 1661: Subarray Sums II](https://cses.fi/problemset/task/1661) | Prefix Sums | Subarray Sums with Negatives
-- [ ] [CSES 1662: Subarray Divisibility](https://cses.fi/problemset/task/1662) | Math & Hashing | Modular Prefix Invariant
-
-### Codeforces & AtCoder (Rating 800–1400)
-- [ ] [Codeforces 4C: Registration System](https://codeforces.com/problemset/problem/4/C) | 1000 | Dynamic Name Collision Resolution
-- [ ] [Codeforces 1360B: Honest Coach](https://codeforces.com/problemset/problem/1360/B) | 800 | Sorting & Adjacent Difference
-
----
-
-## 6. Post-Session Active Recall Flashcards (15 Minutes)
-
-<details>
-<summary><strong>Flashcard 1: Why does `prefix_counts[0] = 1` need to be initialized before the loop in Subarray Sum Equals K?</strong></summary>
-
-It accounts for subarrays that start precisely at index 0. If a prefix sum equals $K$ at index $i$, then `running_sum - k = 0`. Without initializing `prefix_counts[0] = 1`, that subarray would be omitted because no explicit prefix subtraction before index 0 was recorded.
-</details>
-
-<details>
-<summary><strong>Flashcard 2: How can we achieve $O(N)$ time for finding the Longest Consecutive Sequence without sorting?</strong></summary>
-
-Convert the array into a hash set. For each number $x$, check if $x - 1$ is in the set. If $x - 1$ exists, skip $x$ because it cannot be the beginning of a sequence. If $x - 1$ does not exist, $x$ is the start of a streak: iterate $x + 1, x + 2, \dots$ while present in the set. Each element is visited at most twice (once in the outer scan, once during a forward streak), resulting in $O(N)$ total time.
-</details>
-
-<details>
-<summary><strong>Flashcard 3: In Python, why is a tuple `(0, 1, 0, ...)` commonly used as a dict key for Group Anagrams instead of a list?</strong></summary>
-
-Python dictionary keys must be hashable and immutable. Lists are mutable and do not implement `__hash__`, raising a `TypeError`. Tuples are immutable and hashable, allowing a 26-element character count tuple to serve directly as a unique canonical key.
-</details>
-
-<details>
-<summary><strong>Flashcard 4: What is the space-time tradeoff between bucket sorting and a min-heap for Top K Frequent Elements?</strong></summary>
-
-- **Bucket Sort**: $O(N)$ time, $O(N)$ space. Uses frequencies as indices in an array of lists of length $N+1$.
-- **Min-Heap of size K**: $O(N \log K)$ time, $O(N + K)$ space. Useful when $N$ is massive and streaming, and maintaining an entire frequency table in memory is constrained.
-</details>
-
----
-
-[← Back to Home](index.md) \| [Next Topic: Two Pointers →](02-two-pointers.md)
